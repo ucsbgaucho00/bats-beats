@@ -7,71 +7,69 @@ let spotifyPlayer = null;
 let device_id = null;
 
 const initializePlayer = (accessToken) => {
-  // Disconnect any existing player to prevent duplicates
   if (spotifyPlayer) {
     spotifyPlayer.disconnect();
   }
-  
   if (window.Spotify && accessToken) {
     spotifyPlayer = new window.Spotify.Player({
       name: 'Bats & Beats Web Player',
       getOAuthToken: cb => { cb(accessToken); }
     });
-
-    // ... (Error listeners are the same)
-    spotifyPlayer.addListener('initialization_error', ({ message }) => { console.error(message); });
-    spotifyPlayer.addListener('authentication_error', ({ message }) => { console.error(message); });
-    spotifyPlayer.addListener('account_error', ({ message }) => { console.error(message); });
-    spotifyPlayer.addListener('playback_error', ({ message }) => { console.error(message); });
-    spotifyPlayer.addListener('player_state_changed', state => { /* console.log(state); */ });
-
+    // ... (error listeners)
+    spotifyPlayer.addListener('initialization_error', ({ message }) => { console.error('Init Error:', message); });
+    spotifyPlayer.addListener('authentication_error', ({ message }) => { console.error('Auth Error:', message); });
+    spotifyPlayer.addListener('account_error', ({ message }) => { console.error('Account Error:', message); });
+    spotifyPlayer.addListener('playback_error', ({ message }) => { console.error('Playback Error:', message); });
+    
     spotifyPlayer.addListener('ready', ({ device_id: ready_device_id }) => {
       console.log('Ready with Device ID', ready_device_id);
       device_id = ready_device_id;
     });
-
-    spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-      console.log('Device ID has gone offline', device_id);
-    });
-
+    // ... (other listeners)
+    spotifyPlayer.addListener('not_ready', ({ device_id }) => { console.log('Device ID has gone offline', device_id); });
     spotifyPlayer.connect();
   }
 };
 
-export default function PlayButton({ songUri, startTimeMs }) {
+// --- THIS IS THE CORRECTED COMPONENT ---
+export default function PlayButton({ songUri, startTimeMs, accessTokenOverride = null }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [accessToken, setAccessToken] = useState(null);
+  const [accessToken, setAccessToken] = useState(accessTokenOverride);
 
   const timeoutRef = useRef(null);
   const fadeIntervalRef = useRef(null);
 
   useEffect(() => {
-  const fetchTokenAndInitialize = async () => {
-    // If an override token is provided (for the public page), use it directly.
-    if (accessTokenOverride) {
-      setAccessToken(accessTokenOverride);
-      initializePlayer(accessTokenOverride);
-    } else {
-      // Otherwise, fetch the token for the logged-in user.
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('spotify_access_token')
-          .eq('id', session.user.id)
-          .single();
-        if (profile?.spotify_access_token) {
-          setAccessToken(profile.spotify_access_token);
-          initializePlayer(profile.spotify_access_token);
+    // This effect now ONLY handles initializing the player when the token is ready.
+    if (accessToken) {
+      initializePlayer(accessToken);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    // This effect handles fetching the token IF no override is provided.
+    const fetchTokenForLoggedInUser = async () => {
+      if (!accessTokenOverride) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('spotify_access_token')
+            .eq('id', session.user.id)
+            .single();
+          if (profile?.spotify_access_token) {
+            setAccessToken(profile.spotify_access_token);
+          }
         }
       }
-    }
-  };
-  fetchTokenAndInitialize();
-}, [accessTokenOverride]); // Re-run if the override token changes
+    };
+    fetchTokenForLoggedInUser();
+  }, [accessTokenOverride]);
+
 
   const startFadeOut = () => {
-    clearInterval(fadeIntervalRef.current); // Ensure no multiple fades run
+    // ... (function is unchanged)
+    clearInterval(fadeIntervalRef.current);
     let volume = 100;
     fadeIntervalRef.current = setInterval(() => {
       volume -= 10;
@@ -81,7 +79,7 @@ export default function PlayButton({ songUri, startTimeMs }) {
         clearInterval(fadeIntervalRef.current);
         if (spotifyPlayer) {
           spotifyPlayer.pause();
-          spotifyPlayer.setVolume(1); // Reset volume for next play
+          spotifyPlayer.setVolume(1);
         }
         setIsPlaying(false);
       }
@@ -89,18 +87,15 @@ export default function PlayButton({ songUri, startTimeMs }) {
   };
 
   const handlePlay = async () => {
+    // ... (function is unchanged)
     if (!spotifyPlayer || !device_id) {
-      alert('Spotify player is not ready. Please ensure you are active on this device.');
+      alert('Spotify player is not ready. Please ensure you are active on this device and select the "Bats & Beats Web Player" in your Spotify app.');
       return;
     }
-
-    // --- THIS IS THE CORRECTED LOGIC ---
     if (isPlaying) {
-      // If currently playing, ALWAYS trigger the fade-out to stop the music
-      clearTimeout(timeoutRef.current); // Stop the 20-second timer
-      startFadeOut(); // Initiate the 1-second fade-out
+      clearTimeout(timeoutRef.current);
+      startFadeOut();
     } else {
-      // If not playing, start playback
       try {
         await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
           method: 'PUT',
@@ -111,7 +106,6 @@ export default function PlayButton({ songUri, startTimeMs }) {
           },
         });
         setIsPlaying(true);
-        // Set a timeout to start the fade-out after 20 seconds
         timeoutRef.current = setTimeout(startFadeOut, 20000);
       } catch (error) {
         console.error("Failed to start playback:", error);
