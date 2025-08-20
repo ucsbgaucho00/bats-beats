@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
+import SongSearch from './SongSearch'
 
 export default function PlayerManager() {
   const { teamId } = useParams()
@@ -148,7 +149,12 @@ export default function PlayerManager() {
                   <td><input type="number" name="player_number" value={editFormData.player_number} onChange={handleEditFormChange} /></td>
                   <td><input type="text" name="first_name" value={editFormData.first_name} onChange={handleEditFormChange} /></td>
                   <td><input type="text" name="last_name" value={editFormData.last_name} onChange={handleEditFormChange} /></td>
-                  <td><input type="text" name="song_uri" value={editFormData.song_uri} onChange={handleEditFormChange} /></td>
+                  <td>
+  <SongSearch onSongSelect={(song) => {
+    // When a song is selected, update the form data with the URI and clear the song title for display
+    handleEditFormChange({ target: { name: 'song_uri', value: song.uri } })
+  }} />
+</td>
                   <td><input type="number" name="song_start_time" value={editFormData.song_start_time} onChange={handleEditFormChange} /></td>
                   <td>
                     <button onClick={handleUpdatePlayer}>Save</button>
