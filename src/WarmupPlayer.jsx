@@ -4,6 +4,28 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 
+// --- Global variables for the Spotify Player SDK ---
+let spotifyPlayer = null;
+let device_id = null;
+
+const initializePlayer = (accessToken) => {
+  if (spotifyPlayer) {
+    spotifyPlayer.disconnect();
+  }
+  if (window.Spotify && accessToken) {
+    spotifyPlayer = new window.Spotify.Player({
+      name: 'Bats & Beats Warmup Player',
+      getOAuthToken: cb => { cb(accessToken); }
+    });
+    // ... (error listeners)
+    spotifyPlayer.addListener('ready', ({ device_id: ready_device_id }) => {
+      console.log('Warmup Player Ready with Device ID', ready_device_id);
+      device_id = ready_device_id;
+    });
+    spotifyPlayer.connect();
+  }
+};
+
 export default function WarmupPlayer() {
   const { teamId } = useParams()
   const [loading, setLoading] = useState(true)
@@ -11,14 +33,14 @@ export default function WarmupPlayer() {
   const [team, setTeam] = useState(null)
   const [accessToken, setAccessToken] = useState(null)
   
-  // We will wire these up later
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isShuffle, setIsShuffle] = useState(false)
+  const [isShuffle, setIsShuffle] = useState(true) // Shuffle is on by default
+
+  const fadeIntervalRef = useRef(null);
 
   useEffect(() => {
     const getTeamDataAndToken = async () => {
       try {
-        // We'll add the data fetching logic here in a moment
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
           .select('team_name, warmup_playlist_id')
@@ -28,7 +50,6 @@ export default function WarmupPlayer() {
         if (!teamData.warmup_playlist_id) throw new Error("No warmup playlist selected for this team.")
         setTeam(teamData)
 
-        // Fetch a fresh token for the player
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
           const { data, error } = await supabase.functions.invoke('spotify-refresh', {
@@ -36,8 +57,9 @@ export default function WarmupPlayer() {
           })
           if (error) throw error
           setAccessToken(data.new_access_token)
+          // Initialize the player once we have a fresh token
+          initializePlayer(data.new_access_token)
         }
-
       } catch (err) {
         setError(err.message)
       } finally {
@@ -47,9 +69,67 @@ export default function WarmupPlayer() {
     getTeamDataAndToken()
   }, [teamId])
 
-  const handlePlayPause = () => { console.log("Play/Pause clicked") }
-  const handleShuffle = () => { console.log("Shuffle clicked") }
-  const handleSkip = () => { console.log("Skip clicked") }
+  // --- NEW: 2-Second Fade Out Function ---
+  const startFadeOut = (andThen) => {
+    clearInterval(fadeIntervalRef.current);
+    let volume = 100;
+    fadeIntervalRef.current = setInterval(() => {
+      volume -= 5; // 20 steps over 2 seconds
+      if (volume >= 0 && spotifyPlayer) {
+        spotifyPlayer.setVolume(volume / 100).catch(e => console.error(e));
+      } else {
+        clearInterval(fadeIntervalRef.current);
+        if (spotifyPlayer) {
+          spotifyPlayer.pause();
+          spotifyPlayer.setVolume(1);
+        }
+        setIsPlaying(false);
+        if (andThen) andThen(); // Execute next action (like skip) after fade
+      }
+    }, 100);
+  };
+
+  // --- UPDATED HANDLER FUNCTIONS ---
+  const handlePlayPause = async () => {
+    if (!spotifyPlayer || !device_id) {
+      alert('Spotify player is not ready. Please make this your active device.');
+      return;
+    }
+    if (isPlaying) {
+      startFadeOut();
+    } else {
+      // Start playing the selected playlist
+      await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ context_uri: `spotify:playlist:${team.warmup_playlist_id}` }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+      });
+      // Ensure shuffle is set to our desired state
+      await handleShuffle(isShuffle);
+      setIsPlaying(true);
+    }
+  }
+
+  const handleShuffle = async (shuffleState) => {
+    if (!accessToken) return;
+    await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=${shuffleState}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    setIsShuffle(shuffleState);
+  }
+
+  const handleSkip = async () => {
+    if (!accessToken) return;
+    await fetch(`https://api.spotify.com/v1/me/player/next`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    setIsPlaying(true); // Assume playback continues
+  }
 
   if (loading) return <div>Loading Warmup Player...</div>
   if (error) return <div>Error: {error} <Link to="/dashboard">Go Back</Link></div>
@@ -60,8 +140,8 @@ export default function WarmupPlayer() {
       <h1>{team.team_name}</h1>
       <h2>Warmup Mix</h2>
       <div className="player-controls" style={{ marginTop: '20px' }}>
-        <button onClick={handleShuffle} style={{ backgroundColor: isShuffle ? 'lightgreen' : 'white' }}>
-          Shuffle
+        <button onClick={() => handleShuffle(!isShuffle)} style={{ backgroundColor: isShuffle ? 'lightgreen' : 'white' }}>
+          Shuffle {isShuffle ? 'On' : 'Off'}
         </button>
         <button onClick={handlePlayPause} style={{ margin: '0 15px', fontSize: '1.5em' }}>
           {isPlaying ? 'Pause' : 'Play'}
