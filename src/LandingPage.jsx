@@ -97,30 +97,28 @@ export default function LandingPage() {
       <hr />
 
       {isSigningIn ? (
-        <form onSubmit={handleSignIn}>
-          <h2>Sign In</h2>
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Signing In...' : 'Sign In'}
-          </button>
-          <button type="button" onClick={() => setIsSigningIn(false)} style={{ marginLeft: '10px' }}>
-            Need an account? Sign Up
-          </button>
-        </form>
-      ) : (
         <form onSubmit={handleSignUp}>
           <h2>Create Your Account</h2>
-          <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-          <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" />
+          <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" />
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
           <input 
             type="password" 
             placeholder="Password" 
             value={password} 
             onChange={(e) => setPassword(e.target.value)} 
             required 
+            autoComplete="new-password" // --- THIS IS THE KEY FOR SUGGESTIONS ---
             title="Password must be at least 12 characters and include an uppercase letter, a lowercase letter, and a number. No special characters."
+          />
+          {/* --- NEW: Confirmation Field --- */}
+          <input 
+            type="password" 
+            placeholder="Confirm Password" 
+            value={confirmPassword} 
+            onChange={(e) => setConfirmPassword(e.target.value)} 
+            required 
+            autoComplete="new-password"
           />
           <button type="submit" disabled={loading}>
             {loading ? 'Creating Account...' : 'Sign Up'}
