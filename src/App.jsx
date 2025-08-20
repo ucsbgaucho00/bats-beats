@@ -6,6 +6,7 @@ import { Routes, Route } from 'react-router-dom' // Import routing components
 import Auth from './Auth'
 import Dashboard from './Dashboard'
 import PlayerManager from './PlayerManager' // Import the new component
+import PublicPlayer from './PublicPlayer'
 
 function App() {
   const [session, setSession] = useState(null)
