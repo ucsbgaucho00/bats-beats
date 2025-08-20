@@ -59,7 +59,9 @@ export default function Dashboard({ session }) {
   const handleSpotifyConnect = async () => {
     try {
       // Call the Edge Function that generates the Spotify auth URL
-      const { data, error } = await supabase.functions.invoke('spotify-auth')
+      const { data, error } = await supabase.functions.invoke('spotify-auth', {
+  body: {} // Send an empty but valid JSON object
+})
       if (error) throw new Error('Failed to get Spotify auth URL: ' + error.message)
       
       // Redirect the user to the Spotify login/permission screen
