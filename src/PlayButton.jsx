@@ -3,39 +3,37 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 
-// A global variable to hold the Spotify Player instance
 let spotifyPlayer = null;
 let device_id = null;
 
-// This function initializes the Spotify Player
 const initializePlayer = (accessToken) => {
-  if (window.Spotify && accessToken && !spotifyPlayer) {
+  // Disconnect any existing player to prevent duplicates
+  if (spotifyPlayer) {
+    spotifyPlayer.disconnect();
+  }
+  
+  if (window.Spotify && accessToken) {
     spotifyPlayer = new window.Spotify.Player({
       name: 'Bats & Beats Web Player',
       getOAuthToken: cb => { cb(accessToken); }
     });
 
-    // Error handling
+    // ... (Error listeners are the same)
     spotifyPlayer.addListener('initialization_error', ({ message }) => { console.error(message); });
     spotifyPlayer.addListener('authentication_error', ({ message }) => { console.error(message); });
     spotifyPlayer.addListener('account_error', ({ message }) => { console.error(message); });
     spotifyPlayer.addListener('playback_error', ({ message }) => { console.error(message); });
+    spotifyPlayer.addListener('player_state_changed', state => { /* console.log(state); */ });
 
-    // Playback status updates
-    spotifyPlayer.addListener('player_state_changed', state => { console.log(state); });
-
-    // Ready
     spotifyPlayer.addListener('ready', ({ device_id: ready_device_id }) => {
       console.log('Ready with Device ID', ready_device_id);
       device_id = ready_device_id;
     });
 
-    // Not Ready
     spotifyPlayer.addListener('not_ready', ({ device_id }) => {
       console.log('Device ID has gone offline', device_id);
     });
 
-    // Connect to the player!
     spotifyPlayer.connect();
   }
 };
@@ -44,11 +42,9 @@ export default function PlayButton({ songUri, startTimeMs }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
 
-  // Refs to store timer IDs so we can clear them
   const timeoutRef = useRef(null);
   const fadeIntervalRef = useRef(null);
 
-  // 1. Get the user's access token on component mount
   useEffect(() => {
     const fetchToken = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -67,35 +63,35 @@ export default function PlayButton({ songUri, startTimeMs }) {
     fetchToken();
   }, []);
 
-  // Function to start the fade out
   const startFadeOut = () => {
+    clearInterval(fadeIntervalRef.current); // Ensure no multiple fades run
     let volume = 100;
     fadeIntervalRef.current = setInterval(() => {
       volume -= 10;
       if (volume >= 0 && spotifyPlayer) {
-        spotifyPlayer.setVolume(volume / 100);
+        spotifyPlayer.setVolume(volume / 100).catch(e => console.error(e));
       } else {
         clearInterval(fadeIntervalRef.current);
-        spotifyPlayer.pause();
-        spotifyPlayer.setVolume(1); // Reset volume for next play
+        if (spotifyPlayer) {
+          spotifyPlayer.pause();
+          spotifyPlayer.setVolume(1); // Reset volume for next play
+        }
         setIsPlaying(false);
       }
-    }, 100); // 10 steps over 1 second
+    }, 100);
   };
 
-  // Function to handle the play/pause click
   const handlePlay = async () => {
     if (!spotifyPlayer || !device_id) {
       alert('Spotify player is not ready. Please ensure you are active on this device.');
       return;
     }
 
+    // --- THIS IS THE CORRECTED LOGIC ---
     if (isPlaying) {
-      // If currently playing, stop everything
-      clearTimeout(timeoutRef.current);
-      clearInterval(fadeIntervalRef.current);
-      spotifyPlayer.pause();
-      setIsPlaying(false);
+      // If currently playing, ALWAYS trigger the fade-out to stop the music
+      clearTimeout(timeoutRef.current); // Stop the 20-second timer
+      startFadeOut(); // Initiate the 1-second fade-out
     } else {
       // If not playing, start playback
       try {
@@ -121,4 +117,20 @@ export default function PlayButton({ songUri, startTimeMs }) {
       {isPlaying ? 'Pause' : 'Play'}
     </button>
   );
-}
+}```
+
+### Deploy and Test
+
+1.  **Commit and push** this one-file change to GitHub.
+    ```bash
+    git add .
+    git commit -m "fix: Ensure manual pause also triggers fade-out"
+    git push
+    ```
+2.  **Wait for Vercel** to deploy.
+3.  **Test the new behavior:**
+    *   Go to a team page and click "Play" on a song.
+    *   Before the 20 seconds are up, click the "Pause" button.
+    *   The song should now perform the same 1-second fade-out instead of stopping abruptly.
+
+This will make the app's behavior consistent and feel much more polished. Let me know how it works
