@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import SongSearch from './SongSearch'
+import PlayButton from './PlayButton'
 
 export default function PlayerManager() {
   const { teamId } = useParams()
@@ -137,6 +138,7 @@ export default function PlayerManager() {
             <th>Song</th>
             <th>Start (ms)</th>
             <th>Actions</th>
+<th>Play</th>
           </tr>
         </thead>
         {/* --- UPDATED TABLE BODY WITH CONDITIONAL RENDERING --- */}
@@ -160,6 +162,7 @@ export default function PlayerManager() {
                     <button onClick={handleUpdatePlayer}>Save</button>
                     <button onClick={handleCancelClick}>Cancel</button>
                   </td>
+<td><button disabled>Play</button></td>
                 </>
               ) : (
                 // --- NORMAL VIEW ---
@@ -168,11 +171,14 @@ export default function PlayerManager() {
                   <td>{player.first_name}</td>
                   <td>{player.last_name}</td>
                   <td>{player.song_uri}</td>
-                  <td>{player.song_start_time}</td>
+                  <td>{player.song_start_time / 1000}</td>
                   <td>
                     <button onClick={() => handleEditClick(player)}>Edit</button>
                     <button onClick={() => handleDeletePlayer(player.id)}>Delete</button>
                   </td>
+<td>
+  <PlayButton songUri={player.song_uri} startTimeMs={player.song_start_time} />
+</td>
                 </>
               )}
             </tr>
@@ -187,7 +193,7 @@ export default function PlayerManager() {
         <input type="text" name="first_name" placeholder="First Name" value={newPlayer.first_name} onChange={handleInputChange} required />
         <input type="text" name="last_name" placeholder="Last Name" value={newPlayer.last_name} onChange={handleInputChange} />
         <input type="text" name="song_uri" placeholder="Song URI (from Spotify)" value={newPlayer.song_uri} onChange={handleInputChange} />
-        <input type="number" name="song_start_time" placeholder="Start Time (ms)" value={newPlayer.song_start_time} onChange={handleInputChange} />
+        <td><input type="number" name="song_start_time" value={editFormData.song_start_time / 1000} onChange={(e) => handleEditFormChange({ target: { name: 'song_start_time', value: e.target.value * 1000 } })} /></td>
         <button type="submit">Add Player</button>
       </form>
     </div>
