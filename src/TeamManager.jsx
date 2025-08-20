@@ -44,7 +44,7 @@ export default function TeamManager({ session, profile }) {
     try {
       const { error } = await supabase
         .from('teams')
-        .update({ warmup_playlist_id: playlistId || null }) // Use null if "" is selected
+        .update({ warmup_playlist_id: playlistId || null })
         .eq('id', teamId)
       if (error) throw error
       const updatedTeams = teams.map(t => t.id === teamId ? { ...t, warmup_playlist_id: playlistId } : t)
@@ -145,14 +145,14 @@ export default function TeamManager({ session, profile }) {
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                       </select>
-// Inside the Normal View div, after the playlist selector div...
-{team.warmup_playlist_id && (
-  <div style={{ marginTop: '8px' }}>
-    <Link to={`/team/${team.id}/warmup`}>
-      <button>Play Warmup Mix</button>
-    </Link>
-  </div>
-)}
+                    )}
+                    {/* --- THIS IS THE CORRECTED SECTION --- */}
+                    {team.warmup_playlist_id && (
+                      <div style={{ marginTop: '8px' }}>
+                        <Link to={`/team/${team.id}/warmup`}>
+                          <button>Play Warmup Mix</button>
+                        </Link>
+                      </div>
                     )}
                   </div>
                 )}
