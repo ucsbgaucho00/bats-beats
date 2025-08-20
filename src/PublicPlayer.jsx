@@ -14,8 +14,13 @@ export default function PublicPlayer() {
 
   useEffect(() => {
     const fetchAndRefreshToken = async () => {
-      if (!shareId) { /* ... */ return }
+      if (!shareId) {
+        setError('No share ID provided.')
+        setLoading(false)
+        return
+      }
       try {
+        setLoading(true)
         // 1. Get the initial data, including the owner's user ID
         const { data: initialData, error: functionError } = await supabase.functions.invoke('get-public-team-data', {
           body: { shareId }
@@ -24,7 +29,7 @@ export default function PublicPlayer() {
         
         // 2. Call the new refresh function to get a fresh token
         const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', {
-          body: { owner_user_id: initialData.ownerUserId } // We need to add ownerUserId to the get-public-team-data response
+          body: { owner_user_id: initialData.ownerUserId }
         })
         if (refreshError) throw refreshError
         
@@ -46,21 +51,31 @@ export default function PublicPlayer() {
   return (
     <div>
       <h1>{teamData.teamName}</h1>
-      {/* ... table ... */}
-      <tbody>
-        {teamData.players.map(player => (
-          <tr key={player.id}>
-            {/* ... tds ... */}
-            <td>
-              <PlayButton 
-                songUri={player.song_uri} 
-                startTimeMs={player.song_start_time}
-                accessTokenOverride={freshToken} // Pass the newly refreshed token
-              />
-            </td>
+      <p>Walk-up songs</p>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Play</th>
           </tr>
-        ))}
-      </tbody>
+        </thead>
+        <tbody>
+          {teamData.players.map(player => (
+            <tr key={player.id}>
+              <td>{player.player_number}</td>
+              <td>{`${player.first_name} ${player.last_name}`}</td>
+              <td>
+                <PlayButton 
+                  songUri={player.song_uri} 
+                  startTimeMs={player.song_start_time}
+                  accessTokenOverride={freshToken}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
