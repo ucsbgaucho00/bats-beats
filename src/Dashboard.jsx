@@ -36,7 +36,6 @@ export default function Dashboard({ session }) {
   }, [session])
 
   const createCheckoutSession = async (priceId) => {
-    // ... (This function is unchanged)
     try {
       setLoading(true)
       const { data, error } = await supabase.functions.invoke('create-checkout-session', { body: { priceId } })
@@ -50,7 +49,6 @@ export default function Dashboard({ session }) {
   }
 
   const handleSpotifyConnect = async () => {
-    // ... (This function is unchanged)
     try {
       const { data, error } = await supabase.functions.invoke('spotify-auth', { method: 'GET' })
       if (error) throw new Error('Failed to get Spotify auth URL: ' + error.message)
@@ -60,11 +58,9 @@ export default function Dashboard({ session }) {
     }
   }
 
-  // --- NEW FUNCTION TO HANDLE SPOTIFY DISCONNECT ---
   const handleSpotifyDisconnect = async () => {
     if (window.confirm('Are you sure you want to disconnect your Spotify account?')) {
       try {
-        // Update the user's profile to remove the tokens
         const { error } = await supabase
           .from('profiles')
           .update({
@@ -72,10 +68,7 @@ export default function Dashboard({ session }) {
             spotify_refresh_token: null,
           })
           .eq('id', session.user.id)
-
         if (error) throw error
-
-        // Update the local state to instantly reflect the change in the UI
         setProfile({ ...profile, spotify_access_token: null })
         alert('Successfully disconnected from Spotify.')
       } catch (error) {
@@ -97,7 +90,6 @@ export default function Dashboard({ session }) {
           <div style={{ border: '1px solid #ccc', padding: '10px', margin: '20px 0' }}>
             <h3>Spotify Connection</h3>
             {profile?.spotify_access_token ? (
-              // --- UPDATED VIEW FOR WHEN CONNECTED ---
               <>
                 <p style={{ color: 'green' }}>✔ Connected to Spotify</p>
                 <button onClick={handleSpotifyDisconnect}>Disconnect from Spotify</button>
@@ -110,10 +102,36 @@ export default function Dashboard({ session }) {
             )}
           </div>
           
-          {/* ... (Rest of the license and team manager UI is unchanged) ... */}
-          {!profile?.license && ( /* ... */ )}
-          {profile?.license === 'Single' && ( /* ... */ )}
-          {profile?.license === 'Home Run' && ( /* ... */ )}
+          {/* --- THIS IS THE CORRECTED SECTION --- */}
+          {!profile?.license && (
+            <div>
+              <h3>Purchase a License</h3>
+              <button onClick={() => createCheckoutSession(SINGLE_PRICE_ID)} disabled={loading}>
+                Buy Single License ($5.99)
+              </button>
+              <button onClick={() => createCheckoutSession(HOME_RUN_PRICE_ID)} disabled={loading}>
+                Buy Home Run License ($9.99)
+              </button>
+            </div>
+          )}
+
+          {profile?.license === 'Single' && (
+            <div>
+              <h3>Upgrade Your License</h3>
+              <button onClick={() => createCheckoutSession(UPGRADE_PRICE_ID)} disabled={loading}>
+                Upgrade to Home Run ($5.00)
+              </button>
+              <TeamManager session={session} profile={profile} />
+            </div>
+          )}
+
+          {profile?.license === 'Home Run' && (
+            <div>
+              <h3>You have the Home Run License!</h3>
+              <p>You have unlimited access.</p>
+              <TeamManager session={session} profile={profile} />
+            </div>
+          )}
         </div>
       )}
 
