@@ -97,20 +97,26 @@ export default function WarmupPlayer() {
     }
     if (isPlaying) {
       startFadeOut();
-    } else {
-      // Start playing the selected playlist
-      await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ context_uri: `spotify:playlist:${team.warmup_playlist_id}` }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-      });
-      // Ensure shuffle is set to our desired state
-      await handleShuffle(isShuffle);
-      setIsPlaying(true);
-    }
+    // ...
+} else {
+  // Start playing the selected playlist
+  await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ context_uri: `spotify:playlist:${team.warmup_playlist_id}` }),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`
+    },
+  });
+
+  // --- THIS IS THE FIX ---
+  // Wait a brief moment for the device to become active before setting shuffle
+  setTimeout(() => {
+    handleShuffle(isShuffle);
+  }, 500); // 500ms delay
+
+  setIsPlaying(true);
+}
   }
 
   const handleShuffle = async (shuffleState) => {
