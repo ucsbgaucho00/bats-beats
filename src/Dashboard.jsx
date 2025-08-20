@@ -60,7 +60,7 @@ export default function Dashboard({ session }) {
     try {
       // Call the Edge Function that generates the Spotify auth URL
       const { data, error } = await supabase.functions.invoke('spotify-auth', {
-  body: {} // Send an empty but valid JSON object
+  method: 'GET' // Change the method to GET
 })
       if (error) throw new Error('Failed to get Spotify auth URL: ' + error.message)
       
