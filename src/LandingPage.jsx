@@ -4,32 +4,14 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
-// --- NEW: Password validation function ---
 const validatePassword = (password) => {
-  // Min 12 characters
-  if (password.length < 12) {
-    return "Password must be at least 12 characters long.";
-  }
-  // Require lowercase
-  if (!/[a-z]/.test(password)) {
-    return "Password must contain at least one lowercase letter.";
-  }
-  // Require uppercase
-  if (!/[A-Z]/.test(password)) {
-    return "Password must contain at least one uppercase letter.";
-  }
-  // Require number
-  if (!/[0-9]/.test(password)) {
-    return "Password must contain at least one number.";
-  }
-  // No special characters (only letters and numbers)
-  if (/[^a-zA-Z0-9]/.test(password)) {
-    return "Password must not contain any special characters.";
-  }
-  // If all checks pass, return null (no error)
+  if (password.length < 12) return "Password must be at least 12 characters long.";
+  if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter.";
+  if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter.";
+  if (!/[0-9]/.test(password)) return "Password must contain at least one number.";
+  if (/[^a-zA-Z0-9]/.test(password)) return "Password must not contain any special characters.";
   return null;
 };
-
 
 export default function LandingPage() {
   const [loading, setLoading] = useState(false)
@@ -40,27 +22,26 @@ export default function LandingPage() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const handleSignUp = async (event) => {
     event.preventDefault()
-
-    // --- NEW: Run validation before submitting ---
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
     const passwordError = validatePassword(password);
     if (passwordError) {
       alert(passwordError);
-      return; // Stop the sign-up process
+      return;
     }
-
     setLoading(true)
     try {
       const { data, error } = await supabase.auth.signUp({
         email: email,
         password: password,
         options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-          },
+          data: { first_name: firstName, last_name: lastName },
         },
       })
       if (error) throw error
@@ -97,6 +78,18 @@ export default function LandingPage() {
       <hr />
 
       {isSigningIn ? (
+        <form onSubmit={handleSignIn}>
+          <h2>Sign In</h2>
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Signing In...' : 'Sign In'}
+          </button>
+          <button type="button" onClick={() => setIsSigningIn(false)} style={{ marginLeft: '10px' }}>
+            Need an account? Sign Up
+          </button>
+        </form>
+      ) : (
         <form onSubmit={handleSignUp}>
           <h2>Create Your Account</h2>
           <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" />
@@ -108,10 +101,9 @@ export default function LandingPage() {
             value={password} 
             onChange={(e) => setPassword(e.target.value)} 
             required 
-            autoComplete="new-password" // --- THIS IS THE KEY FOR SUGGESTIONS ---
+            autoComplete="new-password"
             title="Password must be at least 12 characters and include an uppercase letter, a lowercase letter, and a number. No special characters."
           />
-          {/* --- NEW: Confirmation Field --- */}
           <input 
             type="password" 
             placeholder="Confirm Password" 
