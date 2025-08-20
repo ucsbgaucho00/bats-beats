@@ -145,6 +145,14 @@ export default function TeamManager({ session, profile }) {
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                       </select>
+// Inside the Normal View div, after the playlist selector div...
+{team.warmup_playlist_id && (
+  <div style={{ marginTop: '8px' }}>
+    <Link to={`/team/${team.id}/warmup`}>
+      <button>Play Warmup Mix</button>
+    </Link>
+  </div>
+)}
                     )}
                   </div>
                 )}

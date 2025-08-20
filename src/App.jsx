@@ -7,6 +7,7 @@ import Auth from './Auth'
 import Dashboard from './Dashboard'
 import PlayerManager from './PlayerManager' // Import the new component
 import PublicPlayer from './PublicPlayer'
+import WarmupPlayer from './WarmupPlayer'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -45,6 +46,10 @@ function App() {
           <Route path="/team/:teamId" element={<PlayerManager />} />
           {/* Default authenticated route */}
           <Route path="*" element={<Dashboard key={session.user.id} session={session} />} />
+<Route path="/dashboard" element={<Dashboard key={session.user.id} session={session} />} />
+<Route path="/team/:teamId" element={<PlayerManager />} />
+<Route path="/team/:teamId/warmup" element={<WarmupPlayer />} /> {/* <-- ADD THIS LINE */}
+<Route path="*" element={<Dashboard key={session.user.id} session={session} />} />
         </Routes>
       )} />
     </Routes>
