@@ -117,20 +117,4 @@ export default function PlayButton({ songUri, startTimeMs }) {
       {isPlaying ? 'Pause' : 'Play'}
     </button>
   );
-}```
-
-### Deploy and Test
-
-1.  **Commit and push** this one-file change to GitHub.
-    ```bash
-    git add .
-    git commit -m "fix: Ensure manual pause also triggers fade-out"
-    git push
-    ```
-2.  **Wait for Vercel** to deploy.
-3.  **Test the new behavior:**
-    *   Go to a team page and click "Play" on a song.
-    *   Before the 20 seconds are up, click the "Pause" button.
-    *   The song should now perform the same 1-second fade-out instead of stopping abruptly.
-
-This will make the app's behavior consistent and feel much more polished. Let me know how it works
+}
