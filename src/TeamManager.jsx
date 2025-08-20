@@ -9,7 +9,6 @@ export default function TeamManager({ session, profile }) {
   const [teams, setTeams] = useState([])
   const [newTeamName, setNewTeamName] = useState('')
 
-  // --- NEW STATE FOR EDITING ---
   const [editingTeamId, setEditingTeamId] = useState(null)
   const [editTeamName, setEditTeamName] = useState('')
 
@@ -17,9 +16,10 @@ export default function TeamManager({ session, profile }) {
     const getTeams = async () => {
       try {
         setLoading(true)
+        // --- UPDATED QUERY: Fetch the public_share_id ---
         const { data, error } = await supabase
           .from('teams')
-          .select('id, team_name')
+          .select('id, team_name, public_share_id') // Added public_share_id
         
         if (error) throw error
         setTeams(data)
@@ -38,7 +38,7 @@ export default function TeamManager({ session, profile }) {
       const { data, error } = await supabase
         .from('teams')
         .insert({ team_name: newTeamName, user_id: session.user.id })
-        .select()
+        .select('id, team_name, public_share_id') // Also select the new ID on create
         .single()
       
       if (error) throw error
@@ -65,7 +65,6 @@ export default function TeamManager({ session, profile }) {
     }
   }
 
-  // --- NEW HANDLER FUNCTIONS FOR EDITING ---
   const handleEditClick = (team) => {
     setEditingTeamId(team.id)
     setEditTeamName(team.team_name)
@@ -102,7 +101,7 @@ export default function TeamManager({ session, profile }) {
 
       <ul>
         {teams.map(team => (
-          <li key={team.id} style={{ marginBottom: '10px' }}>
+          <li key={team.id} style={{ marginBottom: '15px', border: '1px solid #eee', padding: '10px' }}>
             {editingTeamId === team.id ? (
               // --- EDITING VIEW ---
               <>
@@ -116,11 +115,23 @@ export default function TeamManager({ session, profile }) {
               </>
             ) : (
               // --- NORMAL VIEW ---
-              <>
-                <Link to={`/team/${team.id}`}>{team.team_name}</Link>
-                <button onClick={() => handleEditClick(team)} style={{ marginLeft: '10px' }}>Edit</button>
-                <button onClick={() => handleDeleteTeam(team.id)} style={{ marginLeft: '5px' }}>Delete</button>
-              </>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Link to={`/team/${team.id}`}>{team.team_name}</Link>
+                  <button onClick={() => handleEditClick(team)} style={{ marginLeft: '10px' }}>Edit</button>
+                  <button onClick={() => handleDeleteTeam(team.id)} style={{ marginLeft: '5px' }}>Delete</button>
+                </div>
+                {/* --- NEW: Display the unique, shareable link --- */}
+                <div style={{ fontSize: '0.8em', marginTop: '8px' }}>
+                  <strong>Share Link:</strong> <input 
+                    type="text" 
+                    readOnly 
+                    value={`${window.location.origin}/public/${team.public_share_id}`}
+                    onClick={(e) => e.target.select()} // Select text on click for easy copying
+                    style={{ width: '300px', fontSize: '1em', border: '1px solid #ccc' }}
+                  />
+                </div>
+              </div>
             )}
           </li>
         ))}

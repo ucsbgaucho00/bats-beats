@@ -46,7 +46,13 @@ export default function PlayButton({ songUri, startTimeMs }) {
   const fadeIntervalRef = useRef(null);
 
   useEffect(() => {
-    const fetchToken = async () => {
+  const fetchTokenAndInitialize = async () => {
+    // If an override token is provided (for the public page), use it directly.
+    if (accessTokenOverride) {
+      setAccessToken(accessTokenOverride);
+      initializePlayer(accessTokenOverride);
+    } else {
+      // Otherwise, fetch the token for the logged-in user.
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const { data: profile } = await supabase
@@ -59,9 +65,10 @@ export default function PlayButton({ songUri, startTimeMs }) {
           initializePlayer(profile.spotify_access_token);
         }
       }
-    };
-    fetchToken();
-  }, []);
+    }
+  };
+  fetchTokenAndInitialize();
+}, [accessTokenOverride]); // Re-run if the override token changes
 
   const startFadeOut = () => {
     clearInterval(fadeIntervalRef.current); // Ensure no multiple fades run

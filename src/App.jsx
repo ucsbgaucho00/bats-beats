@@ -32,19 +32,23 @@ function App() {
   }
 
   return (
-    <div className="container" style={{ padding: '50px 0 100px 0' }}>
-      {!session ? (
-        <Auth />
-      ) : (
+  <div className="container" style={{ padding: '50px 0 100px 0' }}>
+    <Routes>
+      {/* Publicly accessible route */}
+      <Route path="/public/:shareId" element={<PublicPlayer />} />
+
+      {/* Routes that require authentication */}
+      <Route path="/*" element={!session ? <Auth /> : (
         <Routes>
           <Route path="/dashboard" element={<Dashboard key={session.user.id} session={session} />} />
           <Route path="/team/:teamId" element={<PlayerManager />} />
-          {/* Add a default route to redirect to the dashboard */}
+          {/* Default authenticated route */}
           <Route path="*" element={<Dashboard key={session.user.id} session={session} />} />
         </Routes>
-      )}
-    </div>
-  )
+      )} />
+    </Routes>
+  </div>
+)
 }
 
 export default App
