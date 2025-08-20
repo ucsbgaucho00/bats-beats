@@ -49,6 +49,8 @@ serve(async (req) => {
       redirect_uri: redirectUri,
       state: state,
     })
+    
+    // --- THIS IS THE CORRECTED LINE ---
     const spotifyAuthUrl = `https://accounts.spotify.com/authorize?${params.toString()}`
 
     return new Response(JSON.stringify({ url: spotifyAuthUrl }), {

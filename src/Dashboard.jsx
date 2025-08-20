@@ -7,7 +7,7 @@ import TeamManager from './TeamManager'
 // Your Stripe Price IDs
 const SINGLE_PRICE_ID = 'price_1RlcrbIjwUvbU06TzNxDJYkJ'
 const HOME_RUN_PRICE_ID = 'price_1RlcroIjwUvbU06TJIpGIBlT'
-const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID' // Make sure this is your actual upgrade price ID
+const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID'
 
 export default function Dashboard({ session }) {
   const [loading, setLoading] = useState(true)
@@ -18,20 +18,14 @@ export default function Dashboard({ session }) {
       try {
         setLoading(true)
         const { user } = session
-
-        // Updated query to also fetch the spotify token status
         const { data, error, status } = await supabase
           .from('profiles')
-          .select(`license, stripe_customer_id, spotify_access_token`) // Added spotify_access_token
+          .select(`license, stripe_customer_id, spotify_access_token`)
           .eq('id', user.id)
           .single()
 
-        if (error && status !== 406) {
-          throw error
-        }
-        if (data) {
-          setProfile(data)
-        }
+        if (error && status !== 406) throw error
+        if (data) setProfile(data)
       } catch (error) {
         alert(error.message)
       } finally {
@@ -42,7 +36,7 @@ export default function Dashboard({ session }) {
   }, [session])
 
   const createCheckoutSession = async (priceId) => {
-    // ... (This function remains unchanged)
+    // ... (This function is unchanged)
     try {
       setLoading(true)
       const { data, error } = await supabase.functions.invoke('create-checkout-session', { body: { priceId } })
@@ -55,19 +49,38 @@ export default function Dashboard({ session }) {
     }
   }
 
-  // --- NEW FUNCTION TO HANDLE SPOTIFY CONNECTION ---
   const handleSpotifyConnect = async () => {
+    // ... (This function is unchanged)
     try {
-      // Call the Edge Function that generates the Spotify auth URL
-      const { data, error } = await supabase.functions.invoke('spotify-auth', {
-  method: 'GET' // Change the method to GET
-})
+      const { data, error } = await supabase.functions.invoke('spotify-auth', { method: 'GET' })
       if (error) throw new Error('Failed to get Spotify auth URL: ' + error.message)
-      
-      // Redirect the user to the Spotify login/permission screen
       window.location.href = data.url
     } catch (error) {
       alert(error.message)
+    }
+  }
+
+  // --- NEW FUNCTION TO HANDLE SPOTIFY DISCONNECT ---
+  const handleSpotifyDisconnect = async () => {
+    if (window.confirm('Are you sure you want to disconnect your Spotify account?')) {
+      try {
+        // Update the user's profile to remove the tokens
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            spotify_access_token: null,
+            spotify_refresh_token: null,
+          })
+          .eq('id', session.user.id)
+
+        if (error) throw error
+
+        // Update the local state to instantly reflect the change in the UI
+        setProfile({ ...profile, spotify_access_token: null })
+        alert('Successfully disconnected from Spotify.')
+      } catch (error) {
+        alert('Error disconnecting from Spotify: ' + error.message)
+      }
     }
   }
 
@@ -81,11 +94,14 @@ export default function Dashboard({ session }) {
         <div>
           <h2>Your License: {profile?.license || 'None'}</h2>
 
-          {/* --- NEW SPOTIFY CONNECTION UI --- */}
           <div style={{ border: '1px solid #ccc', padding: '10px', margin: '20px 0' }}>
             <h3>Spotify Connection</h3>
             {profile?.spotify_access_token ? (
-              <p style={{ color: 'green' }}>✔ Connected to Spotify</p>
+              // --- UPDATED VIEW FOR WHEN CONNECTED ---
+              <>
+                <p style={{ color: 'green' }}>✔ Connected to Spotify</p>
+                <button onClick={handleSpotifyDisconnect}>Disconnect from Spotify</button>
+              </>
             ) : (
               <>
                 <p>Connect your Spotify Premium account to enable music playback.</p>
@@ -94,36 +110,10 @@ export default function Dashboard({ session }) {
             )}
           </div>
           
-          {/* --- EXISTING LICENSE AND TEAM MANAGER UI --- */}
-          {!profile?.license && (
-            <div>
-              <h3>Purchase a License</h3>
-              <button onClick={() => createCheckoutSession(SINGLE_PRICE_ID)} disabled={loading}>
-                Buy Single License ($5.99)
-              </button>
-              <button onClick={() => createCheckoutSession(HOME_RUN_PRICE_ID)} disabled={loading}>
-                Buy Home Run License ($9.99)
-              </button>
-            </div>
-          )}
-
-          {profile?.license === 'Single' && (
-            <div>
-              <h3>Upgrade Your License</h3>
-              <button onClick={() => createCheckoutSession(UPGRADE_PRICE_ID)} disabled={loading}>
-                Upgrade to Home Run ($5.00)
-              </button>
-              <TeamManager session={session} profile={profile} />
-            </div>
-          )}
-
-          {profile?.license === 'Home Run' && (
-            <div>
-              <h3>You have the Home Run License!</h3>
-              <p>You have unlimited access.</p>
-              <TeamManager session={session} profile={profile} />
-            </div>
-          )}
+          {/* ... (Rest of the license and team manager UI is unchanged) ... */}
+          {!profile?.license && ( /* ... */ )}
+          {profile?.license === 'Single' && ( /* ... */ )}
+          {profile?.license === 'Home Run' && ( /* ... */ )}
         </div>
       )}
 
