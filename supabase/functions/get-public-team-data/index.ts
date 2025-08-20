@@ -54,6 +54,7 @@ serve(async (req) => {
       teamName: team.team_name,
       players: players,
       ownerSpotifyToken: ownerProfile.spotify_access_token,
+user_id: team.user_id,
     }
 
     return new Response(JSON.stringify(publicData), {
