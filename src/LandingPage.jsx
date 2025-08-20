@@ -4,12 +4,38 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
+// --- NEW: Password validation function ---
+const validatePassword = (password) => {
+  // Min 12 characters
+  if (password.length < 12) {
+    return "Password must be at least 12 characters long.";
+  }
+  // Require lowercase
+  if (!/[a-z]/.test(password)) {
+    return "Password must contain at least one lowercase letter.";
+  }
+  // Require uppercase
+  if (!/[A-Z]/.test(password)) {
+    return "Password must contain at least one uppercase letter.";
+  }
+  // Require number
+  if (!/[0-9]/.test(password)) {
+    return "Password must contain at least one number.";
+  }
+  // No special characters (only letters and numbers)
+  if (/[^a-zA-Z0-9]/.test(password)) {
+    return "Password must not contain any special characters.";
+  }
+  // If all checks pass, return null (no error)
+  return null;
+};
+
+
 export default function LandingPage() {
   const [loading, setLoading] = useState(false)
-  const [isSigningIn, setIsSigningIn] = useState(false) // To toggle between Sign Up and Sign In
+  const [isSigningIn, setIsSigningIn] = useState(false)
   const navigate = useNavigate()
 
-  // State for form fields
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -17,6 +43,14 @@ export default function LandingPage() {
 
   const handleSignUp = async (event) => {
     event.preventDefault()
+
+    // --- NEW: Run validation before submitting ---
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      alert(passwordError);
+      return; // Stop the sign-up process
+    }
+
     setLoading(true)
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -30,8 +64,6 @@ export default function LandingPage() {
         },
       })
       if (error) throw error
-      // After successful sign-up, Supabase sends a confirmation email.
-      // We then redirect them to the pricing page.
       alert('Success! Please check your email to confirm your account. You will then be taken to the pricing page.')
       navigate('/pricing')
     } catch (error) {
@@ -50,9 +82,7 @@ export default function LandingPage() {
         password: password,
       })
       if (error) throw error
-      // On successful sign-in, the ProtectedRoutes component in App.jsx
-      // will automatically handle redirecting them to the dashboard or pricing page.
-      navigate('/dashboard') // Navigate to a protected route to trigger the check
+      navigate('/dashboard')
     } catch (error) {
       alert(error.error_description || error.message)
     } finally {
@@ -67,7 +97,6 @@ export default function LandingPage() {
       <hr />
 
       {isSigningIn ? (
-        // --- SIGN IN FORM ---
         <form onSubmit={handleSignIn}>
           <h2>Sign In</h2>
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -80,13 +109,19 @@ export default function LandingPage() {
           </button>
         </form>
       ) : (
-        // --- SIGN UP FORM ---
         <form onSubmit={handleSignUp}>
           <h2>Create Your Account</h2>
           <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
           <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input type="password" placeholder="Password (min. 6 characters)" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input 
+            type="password" 
+            placeholder="Password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+            title="Password must be at least 12 characters and include an uppercase letter, a lowercase letter, and a number. No special characters."
+          />
           <button type="submit" disabled={loading}>
             {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
