@@ -37,15 +37,18 @@ export default function LandingPage() {
     }
     setLoading(true)
     try {
-      // Step 1: Sign up the user (no metadata)
+      // Step 1: Sign up user, providing an empty data object to satisfy the other project's trigger
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email,
         password: password,
+        options: {
+          data: {}, // --- THIS IS THE CRITICAL FIX ---
+        }
       })
       if (signUpError) throw signUpError
       if (!data.user) throw new Error("Sign-up successful, but no user data returned.")
 
-      // Step 2: Manually create the profile row.
+      // Step 2: Manually create the profile row with the user's name.
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({ id: data.user.id, first_name: firstName, last_name: lastName })
