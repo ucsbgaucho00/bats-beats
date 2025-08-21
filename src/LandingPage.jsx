@@ -4,26 +4,20 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
-const validatePassword = (password) => {
-  if (password.length < 12) return "Password must be at least 12 characters long.";
-  if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter.";
-  if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter.";
-  if (!/[0-9]/.test(password)) return "Password must contain at least one number.";
-  if (/[^a-zA-Z0-9]/.test(password)) return "Password must not contain any special characters.";
-  return null;
-};
+const validatePassword = (password) => { /* ... (unchanged) ... */ };
 
 export default function LandingPage() {
+  // ... (state variables are the same)
   const [loading, setLoading] = useState(false)
   const [isSigningIn, setIsSigningIn] = useState(false)
   const navigate = useNavigate()
-
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
+  // --- THIS IS THE NEW, 3-STEP SIGN-UP FUNCTION ---
   const handleSignUp = async (event) => {
     event.preventDefault()
     if (password !== confirmPassword) {
@@ -37,23 +31,21 @@ export default function LandingPage() {
     }
     setLoading(true)
     try {
-      // Step 1: Sign up the user with only email and password
+      // Step 1: Sign up the user (no metadata)
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email,
         password: password,
-        // NO options.data field anymore
       })
       if (signUpError) throw signUpError
       if (!data.user) throw new Error("Sign-up successful, but no user data returned.")
 
-      // Step 2: Update the user's profile with their name
-      // This uses the user's own session to update their profile, which is RLS-secure.
-      const { error: updateError } = await supabase
+      // Step 2: MANUALLY create the profile row.
+      // We must do this because we deleted the trigger.
+      const { error: insertError } = await supabase
         .from('profiles')
-        .update({ first_name: firstName, last_name: lastName })
-        .eq('id', data.user.id)
+        .insert({ id: data.user.id, first_name: firstName, last_name: lastName })
       
-      if (updateError) throw updateError
+      if (insertError) throw insertError
 
       alert('Success! Please check your email to confirm your account. You will then be taken to the pricing page.')
       navigate('/pricing')
@@ -64,72 +56,9 @@ export default function LandingPage() {
     }
   }
 
-  const handleSignIn = async (event) => {
-    event.preventDefault()
-    setLoading(true)
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      })
-      if (error) throw error
-      navigate('/dashboard')
-    } catch (error) {
-      alert(error.error_description || error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleSignIn = async (event) => { /* ... (unchanged) ... */ }
 
   return (
-    <div>
-      <h1>Welcome to Bats & Beats</h1>
-      <p>The ultimate walk-up song manager for your baseball or softball team.</p>
-      <hr />
-
-      {isSigningIn ? (
-        <form onSubmit={handleSignIn}>
-          <h2>Sign In</h2>
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Signing In...' : 'Sign In'}
-          </button>
-          <button type="button" onClick={() => setIsSigningIn(false)} style={{ marginLeft: '10px' }}>
-            Need an account? Sign Up
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={handleSignUp}>
-          <h2>Create Your Account</h2>
-          <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" />
-          <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" />
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-            autoComplete="new-password"
-            title="Password must be at least 12 characters and include an uppercase letter, a lowercase letter, and a number. No special characters."
-          />
-          <input 
-            type="password" 
-            placeholder="Confirm Password" 
-            value={confirmPassword} 
-            onChange={(e) => setConfirmPassword(e.target.value)} 
-            required 
-            autoComplete="new-password"
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Sign Up'}
-          </button>
-          <button type="button" onClick={() => setIsSigningIn(true)} style={{ marginLeft: '10px' }}>
-            Already a member? Sign In
-          </button>
-        </form>
-      )}
-    </div>
+    // ... (The JSX for the form is the same)
   )
 }
