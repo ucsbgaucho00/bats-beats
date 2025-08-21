@@ -37,14 +37,24 @@ export default function LandingPage() {
     }
     setLoading(true)
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Step 1: Sign up the user with only email and password
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: email,
         password: password,
-        options: {
-          data: { first_name: firstName, last_name: lastName },
-        },
+        // NO options.data field anymore
       })
-      if (error) throw error
+      if (signUpError) throw signUpError
+      if (!data.user) throw new Error("Sign-up successful, but no user data returned.")
+
+      // Step 2: Update the user's profile with their name
+      // This uses the user's own session to update their profile, which is RLS-secure.
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ first_name: firstName, last_name: lastName })
+        .eq('id', data.user.id)
+      
+      if (updateError) throw updateError
+
       alert('Success! Please check your email to confirm your account. You will then be taken to the pricing page.')
       navigate('/pricing')
     } catch (error) {
