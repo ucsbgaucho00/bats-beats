@@ -52,7 +52,7 @@ export default function LandingPage() {
       })
       if (error) throw error
       
-      alert('Success! Please check your email to confirm your account. You will then be taken to the pricing page.')
+      alert('Success! You will now be taken to the pricing page.')
       navigate('/pricing')
     } catch (error) {
       alert(error.error_description || error.message)
