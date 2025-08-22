@@ -6,7 +6,6 @@ import { supabase } from './supabaseClient'
 import SongSearch from './SongSearch'
 import PlayButton from './PlayButton'
 
-// --- HELPER FUNCTIONS FOR TIME CONVERSION ---
 const formatTime = (ms) => {
   if (ms === null || isNaN(ms) || ms === 0) return '00:00';
   const totalSeconds = Math.floor(ms / 1000);
@@ -22,7 +21,6 @@ const parseTime = (timeStr) => {
   const seconds = parseInt(parts[1], 10) || 0;
   return ((minutes * 60) + seconds) * 1000;
 };
-
 
 export default function PlayerManager() {
   const { teamId } = useParams()
@@ -52,10 +50,9 @@ export default function PlayerManager() {
         const { data: teamData } = await supabase.from('teams').select('team_name').eq('id', teamId).single()
         setTeamName(teamData.team_name)
         
-        // --- FIX: Ensure all song details are fetched ---
         const { data: playersData, error: playersError } = await supabase
           .from('players')
-          .select('id, player_number, first_name, last_name, song_uri, song_title, song_artist, song_start_time') // Select all columns to get song_title, etc.
+          .select('id, player_number, first_name, last_name, song_uri, song_title, song_artist, song_thumbnail_url, song_start_time')
           .eq('team_id', teamId)
           .order('batting_order', { ascending: true })
 
@@ -90,34 +87,67 @@ export default function PlayerManager() {
     e.preventDefault()
     try {
       const { song_search_text, ...playerToInsert } = { ...newPlayer, team_id: teamId }
-      
-      const { data, error } = await supabase.from('players').insert(playerToInsert).select().single()
+      const { data, error } = await supabase.from('players').insert(playerToInsert).select('*').single()
       if (error) throw error
-      
       setPlayers([...players, data])
-      
       setNewPlayer({
-        player_number: '',
-        first_name: '',
-        last_name: '',
-        song_uri: '',
-        song_title: '',
-        song_artist: '',
-        song_thumbnail_url: '',
-        song_start_time: 0,
-        song_search_text: '',
+        player_number: '', first_name: '', last_name: '', song_uri: '',
+        song_title: '', song_artist: '', song_thumbnail_url: '',
+        song_start_time: 0, song_search_text: '',
       })
     } catch (error) {
       alert('Error adding player: ' + error.message)
     }
   }
   
-  const handleDeletePlayer = async (playerId) => { /* ... (unchanged) ... */ }
-  const handleEditClick = (player) => { /* ... (unchanged) ... */ }
-  const handleCancelClick = () => { /* ... (unchanged) ... */ }
-  const handleEditFormChange = (e) => { /* ... (unchanged) ... */ }
-  const handleEditSongSelection = (song) => { /* ... (unchanged) ... */ }
-  const handleUpdatePlayer = async () => { /* ... (unchanged) ... */ }
+  const handleDeletePlayer = async (playerId) => {
+    if (window.confirm('Are you sure you want to delete this player?')) {
+      try {
+        const { error } = await supabase.from('players').delete().eq('id', playerId)
+        if (error) throw error
+        setPlayers(players.filter(p => p.id !== playerId))
+      } catch (error) {
+        alert('Error deleting player: ' + error.message)
+      }
+    }
+  }
+
+  const handleEditClick = (player) => {
+    setEditingPlayerId(player.id)
+    setEditFormData({ ...player }) 
+  }
+
+  const handleCancelClick = () => {
+    setEditingPlayerId(null)
+  }
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target
+    setEditFormData({ ...editFormData, [name]: value })
+  }
+
+  const handleEditSongSelection = (song) => {
+    setEditFormData({
+      ...editFormData,
+      song_uri: song.uri,
+      song_title: song.title,
+      song_artist: song.artist,
+      song_thumbnail_url: song.thumbnail,
+    })
+  }
+
+  const handleUpdatePlayer = async () => {
+    try {
+      const { id, ...updatedPlayerData } = editFormData
+      const { error } = await supabase.from('players').update(updatedPlayerData).eq('id', id)
+      if (error) throw error
+      const updatedPlayers = players.map(p => p.id === id ? editFormData : p)
+      setPlayers(updatedPlayers)
+      setEditingPlayerId(null)
+    } catch (error) {
+      alert('Error updating player: ' + error.message)
+    }
+  }
 
   if (loading) return <div>Loading team details...</div>
 
@@ -133,7 +163,6 @@ export default function PlayerManager() {
             <th>First Name</th>
             <th>Last Name</th>
             <th>Song</th>
-            {/* --- FIX: Corrected table header --- */}
             <th>Start Time</th>
             <th>Actions</th>
             <th>Play</th>
@@ -143,12 +172,11 @@ export default function PlayerManager() {
           {players.map(player => (
             <tr key={player.id}>
               {editingPlayerId === player.id ? (
-                // --- EDITING VIEW (with time format fix) ---
                 <>
                   <td><input type="number" name="player_number" value={editFormData.player_number} onChange={handleEditFormChange} /></td>
                   <td><input type="text" name="first_name" value={editFormData.first_name} onChange={handleEditFormChange} /></td>
                   <td><input type="text" name="last_name" value={editFormData.last_name} onChange={handleEditFormChange} /></td>
-                  <td><SongSearch onSongSelect={handleEditSongSelection} initialValue={`${editFormData.song_title} - ${editFormData.song_artist}`} /></td>
+                  <td><SongSearch onSongSelect={handleEditSongSelection} initialValue={`${editFormData.song_title || ''} - ${editFormData.song_artist || ''}`} /></td>
                   <td>
                     <input 
                       type="text" 
@@ -165,7 +193,6 @@ export default function PlayerManager() {
                   <td><button disabled>Play</button></td>
                 </>
               ) : (
-                // --- NORMAL VIEW (with display fixes) ---
                 <>
                   <td>{player.player_number}</td>
                   <td>{player.first_name}</td>
@@ -205,7 +232,6 @@ export default function PlayerManager() {
           onSongSelect={handleSongSelection} 
           initialValue={newPlayer.song_search_text} 
         />
-        {/* --- FIX: Time input now uses defaultValue and MM:SS format --- */}
         <input 
           type="text" 
           placeholder="Start Time (MM:SS)" 
