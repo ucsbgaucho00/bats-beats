@@ -28,7 +28,7 @@ export default function TeamManager({ session, profile }) {
           setLoadingPlaylists(true)
           const { data: playlistsData, error: playlistsError } = await supabase.functions.invoke('get-spotify-playlists', { method: 'GET' })
           if (playlistsError) throw playlistsError
-          setPlaylists(playlistsData)
+          setPlaylists(playlistsData || []) // Default to empty array if no playlists
           setLoadingPlaylists(false)
         }
       } catch (error) {
@@ -146,7 +146,6 @@ export default function TeamManager({ session, profile }) {
                         ))}
                       </select>
                     )}
-                    {/* --- THIS IS THE CORRECTED SECTION --- */}
                     {team.warmup_playlist_id && (
                       <div style={{ marginTop: '8px' }}>
                         <Link to={`/team/${team.id}/warmup`}>

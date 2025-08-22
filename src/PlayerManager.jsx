@@ -55,7 +55,7 @@ export default function PlayerManager() {
         // --- FIX: Ensure all song details are fetched ---
         const { data: playersData, error: playersError } = await supabase
           .from('players')
-          .select('*') // Select all columns to get song_title, etc.
+          .select('id, player_number, first_name, last_name, song_uri, song_title, song_artist, song_start_time') // Select all columns to get song_title, etc.
           .eq('team_id', teamId)
           .order('batting_order', { ascending: true })
 
