@@ -165,7 +165,6 @@ export default function PlayerManager() {
             <th>Song</th>
             <th>Start Time</th>
             <th>Actions</th>
-            <th>Play</th>
           </tr>
         </thead>
         <tbody>
@@ -189,8 +188,7 @@ export default function PlayerManager() {
                   <td>
                     <button onClick={handleUpdatePlayer}>Save</button>
                     <button onClick={handleCancelClick}>Cancel</button>
-                  </td>
-                  <td><button disabled>Play</button></td>
+                  </td>                  
                 </>
               ) : (
                 <>
@@ -212,10 +210,7 @@ export default function PlayerManager() {
                   <td>
                     <button onClick={() => handleEditClick(player)}>Edit</button>
                     <button onClick={() => handleDeletePlayer(player.id)}>Delete</button>
-                  </td>
-                  <td>
-                    <PlayButton songUri={player.song_uri} startTimeMs={player.song_start_time} />
-                  </td>
+                  </td>               
                 </>
               )}
             </tr>

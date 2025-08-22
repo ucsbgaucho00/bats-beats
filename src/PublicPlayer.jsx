@@ -56,7 +56,8 @@ export default function PublicPlayer() {
         <thead>
           <tr>
             <th>#</th>
-            <th>Name</th>
+            <th>Player</th>
+            <th>Song</th>
             <th>Play</th>
           </tr>
         </thead>
@@ -64,7 +65,22 @@ export default function PublicPlayer() {
           {teamData.players.map(player => (
             <tr key={player.id}>
               <td>{player.player_number}</td>
-              <td>{`${player.first_name} ${player.last_name}`}</td>
+              <td>
+                {/* --- NEW: Format player name --- */}
+                {`${player.first_name} ${player.last_name ? player.last_name.charAt(0) + '.' : ''}`}
+              </td>
+              <td>
+                {/* --- NEW: Display song title and artist --- */}
+                {player.song_title ? (
+                  <div>
+                    <strong>{player.song_title}</strong>
+                    <br />
+                    <span style={{fontSize: '0.9em', color: '#555'}}>{player.song_artist}</span>
+                  </div>
+                ) : (
+                  'N/A'
+                )}
+              </td>
               <td>
                 <PlayButton 
                   songUri={player.song_uri} 
