@@ -14,6 +14,10 @@ export default function Dashboard({ session }) {
   const [profile, setProfile] = useState(null)
 
   useEffect(() => {
+    // --- NEW: Check for a redirect from Stripe ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const stripeStatus = urlParams.get('status');
+
     const getProfile = async () => {
       try {
         setLoading(true)
@@ -32,8 +36,18 @@ export default function Dashboard({ session }) {
         setLoading(false)
       }
     }
-    getProfile()
-  }, [session])
+
+    // If returning from a successful Stripe payment, wait a moment before fetching
+    if (stripeStatus === 'success') {
+      setTimeout(() => {
+        getProfile();
+        // Clean up the URL
+        window.history.replaceState({}, document.title, "/dashboard");
+      }, 2000); // 2-second delay for webhook
+    } else {
+      getProfile();
+    }
+  }, [session]);
 
   const createCheckoutSession = async (priceId) => {
     try {
