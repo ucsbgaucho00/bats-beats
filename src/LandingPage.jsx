@@ -1,3 +1,5 @@
+// Re-deploying to apply new Vercel environment variables
+
 // src/LandingPage.jsx
 
 import { useState } from 'react'
