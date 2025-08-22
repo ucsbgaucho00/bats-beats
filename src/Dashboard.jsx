@@ -3,25 +3,27 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import TeamManager from './TeamManager'
+import { useOutletContext } from 'react-router-dom'
 
 // Your Stripe Price IDs
 const SINGLE_PRICE_ID = 'price_1RlcrbIjwUvbU06TzNxDJYkJ'
 const HOME_RUN_PRICE_ID = 'price_1RlcroIjwUvbU06TJIpGIBlT'
 const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID'
 
-export default function Dashboard({ session }) {
+export default function Dashboard() {
+  const { session } = useOutletContext() // Get the session from the router context
+
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
 
   useEffect(() => {
-    // --- NEW: Check for a redirect from Stripe ---
     const urlParams = new URLSearchParams(window.location.search);
     const stripeStatus = urlParams.get('status');
 
     const getProfile = async () => {
       try {
         setLoading(true)
-        const { user } = session
+        const { user } = session // Now this will work because session is defined
         const { data, error, status } = await supabase
           .from('profiles')
           .select(`license, stripe_customer_id, spotify_access_token`)
@@ -37,13 +39,11 @@ export default function Dashboard({ session }) {
       }
     }
 
-    // If returning from a successful Stripe payment, wait a moment before fetching
     if (stripeStatus === 'success') {
       setTimeout(() => {
         getProfile();
-        // Clean up the URL
         window.history.replaceState({}, document.title, "/dashboard");
-      }, 2000); // 2-second delay for webhook
+      }, 2000);
     } else {
       getProfile();
     }
@@ -91,19 +91,25 @@ export default function Dashboard({ session }) {
     }
   }
 
+  // A simple sign out function for the button
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    // The ProtectedRoutes component will automatically redirect to the landing page
+  }
+
   return (
     <div className="form-widget">
       <h1>Welcome to Your Dashboard</h1>
       
       {loading ? (
         <p>Loading your profile...</p>
-      ) : (
+      ) : profile ? (
         <div>
-          <h2>Your License: {profile?.license || 'None'}</h2>
+          <h2>Your License: {profile.license}</h2>
 
           <div style={{ border: '1px solid #ccc', padding: '10px', margin: '20px 0' }}>
             <h3>Spotify Connection</h3>
-            {profile?.spotify_access_token ? (
+            {profile.spotify_access_token ? (
               <>
                 <p style={{ color: 'green' }}>✔ Connected to Spotify</p>
                 <button onClick={handleSpotifyDisconnect}>Disconnect from Spotify</button>
@@ -116,20 +122,7 @@ export default function Dashboard({ session }) {
             )}
           </div>
           
-          {/* --- THIS IS THE CORRECTED SECTION --- */}
-          {!profile?.license && (
-            <div>
-              <h3>Purchase a License</h3>
-              <button onClick={() => createCheckoutSession(SINGLE_PRICE_ID)} disabled={loading}>
-                Buy Single License ($5.99)
-              </button>
-              <button onClick={() => createCheckoutSession(HOME_RUN_PRICE_ID)} disabled={loading}>
-                Buy Home Run License ($9.99)
-              </button>
-            </div>
-          )}
-
-          {profile?.license === 'Single' && (
+          {profile.license === 'Single' && (
             <div>
               <h3>Upgrade Your License</h3>
               <button onClick={() => createCheckoutSession(UPGRADE_PRICE_ID)} disabled={loading}>
@@ -139,7 +132,7 @@ export default function Dashboard({ session }) {
             </div>
           )}
 
-          {profile?.license === 'Home Run' && (
+          {profile.license === 'Home Run' && (
             <div>
               <h3>You have the Home Run License!</h3>
               <p>You have unlimited access.</p>
@@ -147,10 +140,12 @@ export default function Dashboard({ session }) {
             </div>
           )}
         </div>
+      ) : (
+        <p>Could not load your profile. Please try signing out and signing back in.</p>
       )}
 
       <br />
-      <button className="button block" onClick={() => supabase.auth.signOut()}>
+      <button className="button block" onClick={handleSignOut}>
         Sign Out
       </button>
     </div>

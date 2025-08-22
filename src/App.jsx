@@ -21,7 +21,6 @@ const ProtectedRoutes = () => {
       const { data: { session } } = await supabase.auth.getSession()
       setSession(session)
       if (session) {
-        // If there's a session, check if they have a license
         const { data: userProfile } = await supabase
           .from('profiles')
           .select('license')
@@ -32,24 +31,29 @@ const ProtectedRoutes = () => {
       setLoading(false)
     }
     checkUser()
+    
+    // Listen for auth changes to handle logout
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session)
+      }
+    )
+    return () => subscription.unsubscribe()
+
   }, [])
 
   if (loading) {
     return <div>Loading session...</div>
   }
-
   if (!session) {
-    // If no session, redirect to the landing page
     return <Navigate to="/" replace />
   }
-
   if (!profile?.license) {
-    // If session exists but NO license, redirect to the pricing page
     return <Navigate to="/pricing" replace />
   }
 
-  // If session and license exist, show the main app content
-  return <Outlet />
+  // Pass the session down to all protected child routes
+  return <Outlet context={{ session }} />
 };
 
 
