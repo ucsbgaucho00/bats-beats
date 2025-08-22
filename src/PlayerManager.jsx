@@ -192,8 +192,11 @@ export default function PlayerManager() {
         <input type="number" name="player_number" placeholder="Number" value={newPlayer.player_number} onChange={handleInputChange} />
         <input type="text" name="first_name" placeholder="First Name" value={newPlayer.first_name} onChange={handleInputChange} required />
         <input type="text" name="last_name" placeholder="Last Name" value={newPlayer.last_name} onChange={handleInputChange} />
-        <input type="text" name="song_uri" placeholder="Song URI (from Spotify)" value={newPlayer.song_uri} onChange={handleInputChange} />
-        <td><input type="number" name="song_start_time" value={editFormData.song_start_time / 1000} onChange={(e) => handleEditFormChange({ target: { name: 'song_start_time', value: e.target.value * 1000 } })} /></td>
+        <SongSearch onSongSelect={(song) => {
+  // When a song is selected, update the newPlayer state with its URI
+  handleInputChange({ target: { name: 'song_uri', value: song.uri } })
+}} />
+        <td><input type="number" name="song_start_time" placeholder="Song start time in 00:00 format" value={editFormData.song_start_time / 1000} onChange={(e) => handleEditFormChange({ target: { name: 'song_start_time', value: e.target.value * 1000 } })} /></td>
         <button type="submit">Add Player</button>
       </form>
     </div>

@@ -8,6 +8,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// A helper function to refresh the Spotify token
+async function refreshSpotifyToken(refreshToken, supabaseAdmin, userId) {
+  const clientId = Deno.env.get('SPOTIFY_CLIENT_ID')!
+  const clientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET')!
+
+  const response = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + btoa(`${clientId}:${clientSecret}`),
+    },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+  })
+
+  if (!response.ok) throw new Error('Failed to refresh Spotify token.')
+  const newTokens = await response.json()
+
+  // Save the new access token back to the database
+  await supabaseAdmin
+    .from('profiles')
+    .update({ spotify_access_token: newTokens.access_token })
+    .eq('id', userId)
+
+  return newTokens.access_token
+}
+
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -19,44 +49,51 @@ serve(async (req) => {
       return new Response(JSON.stringify([]), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    // 1. Get the user's access token from the database
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SB_SERVICE_ROLE_KEY')!,
-      { db: { schema: 'bats_and_beats' } }
+      { db: { schema: 'public' } }
     )
-    const authHeader = req.headers.get('Authorization')!
-    const { data: { user } } = await createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authHeader } } }).auth.getUser()
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) throw new Error('Missing Authorization header.');
+    const jwt = authHeader.replace('Bearer ', '');
+    const { data: { user } } = await supabaseAdmin.auth.getUser(jwt);
     if (!user) throw new Error('User not authenticated')
 
-    const { data: profile, error: profileError } = await supabaseAdmin
+    let { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('spotify_access_token')
+      .select('spotify_access_token, spotify_refresh_token')
       .eq('id', user.id)
       .single()
-    if (profileError || !profile?.spotify_access_token) throw new Error('Spotify token not found for user.')
+    if (!profile) throw new Error('Profile not found.')
 
-    // 2. Call the Spotify Search API
+    let accessToken = profile.spotify_access_token;
+    
+    // Make the initial search request
     const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=5`
-    const spotifyResponse = await fetch(searchUrl, {
-      headers: {
-        'Authorization': `Bearer ${profile.spotify_access_token}`
-      }
+    let spotifyResponse = await fetch(searchUrl, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
     })
 
-    if (!spotifyResponse.ok) {
-      // If token is expired, this will fail. We'll handle refreshing it later.
-      throw new Error('Spotify API request failed.')
+    // If the token is expired (401), refresh it and try again
+    if (spotifyResponse.status === 401 && profile.spotify_refresh_token) {
+      console.log('Access token expired, refreshing...');
+      accessToken = await refreshSpotifyToken(profile.spotify_refresh_token, supabaseAdmin, user.id);
+      // Retry the search with the new token
+      spotifyResponse = await fetch(searchUrl, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      })
     }
 
-    const searchData = await spotifyResponse.json()
+    if (!spotifyResponse.ok) throw new Error('Spotify API request failed after potential refresh.')
     
-    // 3. Format the results into a clean array
+    const searchData = await spotifyResponse.json()
     const results = searchData.tracks.items.map((track: any) => ({
       uri: track.uri,
       title: track.name,
       artist: track.artists.map((artist: any) => artist.name).join(', '),
-      thumbnail: track.album.images[track.album.images.length - 1]?.url, // Get the smallest thumbnail
+      thumbnail: track.album.images[track.album.images.length - 1]?.url,
     }))
 
     return new Response(JSON.stringify(results), {
