@@ -1,4 +1,5 @@
 // supabase/functions/get-public-team-data/index.ts
+
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -29,7 +30,8 @@ serve(async (req) => {
       .single()
     if (teamError) throw new Error('Team not found.')
 
-    // --- THIS IS THE CORRECTED LINE ---
+    // --- THIS IS THE CORRECTED LOGIC ---
+    // Fetch only the active players and all their details
     const { data: players, error: playersError } = await supabaseAdmin
       .from('players')
       .select('id, player_number, first_name, last_name, song_uri, song_start_time, song_title, song_artist')
@@ -40,7 +42,7 @@ serve(async (req) => {
 
     const publicData = {
       teamName: team.team_name,
-      players: players,
+      players: players, // Send the list of active players
       ownerUserId: team.user_id,
     }
 
