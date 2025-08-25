@@ -1,7 +1,7 @@
 // src/PublicPlayer.jsx
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import PlayButton from './PlayButton'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
@@ -28,7 +28,11 @@ export default function PublicPlayer() {
       try {
         setLoading(true)
         const { data: initialData } = await supabase.functions.invoke('get-public-team-data', { body: { shareId } })
-        const { data: tokenData } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } })
+        if (initialData.error) throw new Error(initialData.error)
+        
+        const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } })
+        if (refreshError) throw refreshError
+        
         setTeamData(initialData)
         const allPlayers = initialData.players || [];
         setActivePlayers(allPlayers.filter(p => p.is_active).sort((a, b) => a.batting_order - b.batting_order))
@@ -96,6 +100,16 @@ export default function PublicPlayer() {
       <h1>{teamData?.teamName}</h1>
       <p>Walk-up songs</p>
       
+      {/* --- THIS IS THE NEWLY ADDED SECTION --- */}
+      {teamData?.showWarmupButton && (
+        <div style={{ margin: '20px 0' }}>
+          {/* The link now correctly points to the public warmup player, which we will build next */}
+          <Link to={`/public/${shareId}/warmup`}>
+            <button style={{fontSize: '1.1em', padding: '10px'}}>▶ Play Warmup Mix</button>
+          </Link>
+        </div>
+      )}
+
       <div style={{ marginBottom: '20px' }}>
         <button onClick={() => setIsReordering(!isReordering)}>{isReordering ? 'Cancel Editing' : 'Edit Lineup'}</button>
         {isReordering && (
