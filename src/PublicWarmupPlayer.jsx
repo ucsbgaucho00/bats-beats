@@ -35,13 +35,10 @@ export default function PublicWarmupPlayer() {
   const [isShuffle, setIsShuffle] = useState(true)
   const fadeIntervalRef = useRef(null);
 
-  // src/PublicWarmupPlayer.jsx
-
   useEffect(() => {
     const getPublicDataAndToken = async () => {
       try {
         setLoading(true);
-        // Step 1: Directly query the 'teams' table
         const { data: team, error: teamError } = await supabase
           .from('teams')
           .select('id, team_name, user_id, warmup_playlist_id')
@@ -58,7 +55,6 @@ export default function PublicWarmupPlayer() {
         }
         setTeamData(initialData);
 
-        // Step 2: Refresh the token
         const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } });
         if (refreshError) throw refreshError;
         setAccessToken(tokenData.new_access_token);
