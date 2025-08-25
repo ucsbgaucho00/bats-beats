@@ -35,49 +35,42 @@ export default function PublicWarmupPlayer() {
   const [isShuffle, setIsShuffle] = useState(true)
   const fadeIntervalRef = useRef(null);
 
+  // src/PublicWarmupPlayer.jsx
+
   useEffect(() => {
     const getPublicDataAndToken = async () => {
-      if (!shareId) return;
       try {
         setLoading(true);
+        // Step 1: Directly query the 'teams' table
+        const { data: team, error: teamError } = await supabase
+          .from('teams')
+          .select('id, team_name, user_id, warmup_playlist_id')
+          .eq('public_share_id', shareId)
+          .single();
+        if (teamError) throw teamError;
+        if (!team.warmup_playlist_id) throw new Error("No warmup playlist is set for this team.");
 
-        // --- THIS IS THE CRITICAL FIX ---
-        // Use a direct fetch call to make a GET request to our function
-        const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-team-data?shareId=${shareId}`;
-        const response = await fetch(functionUrl, {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          }
-        });
-        if (!response.ok) {
-          const errorBody = await response.json();
-          throw new Error(errorBody.error || 'Failed to fetch team data');
+        const initialData = {
+            teamName: team.team_name,
+            teamId: team.id,
+            ownerUserId: team.user_id,
+            warmup_playlist_id: team.warmup_playlist_id,
         }
-        const initialData = await response.json();
-        // --- END OF CRITICAL FIX ---
+        setTeamData(initialData);
 
-        const { data: teamDetails, error: teamError } = await supabase
-            .from('teams')
-            .select('warmup_playlist_id')
-            .eq('id', initialData.teamId)
-            .single()
-        if (teamError) throw teamError
-        if (!teamDetails.warmup_playlist_id) throw new Error("No warmup playlist is set for this team.")
-
-        setTeamData({ ...initialData, warmup_playlist_id: teamDetails.warmup_playlist_id })
-
-        const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } })
-        if (refreshError) throw refreshError
-        setAccessToken(tokenData.new_access_token)
-        initializePlayer(tokenData.new_access_token)
+        // Step 2: Refresh the token
+        const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } });
+        if (refreshError) throw refreshError;
+        setAccessToken(tokenData.new_access_token);
+        initializePlayer(tokenData.new_access_token);
       } catch (err) {
-        setError(err.message)
+        setError(err.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    getPublicDataAndToken()
-  }, [shareId])
+    };
+    getPublicDataAndToken();
+  }, [shareId]);
 
   const startFadeOut = (andThen) => {
     clearInterval(fadeIntervalRef.current);

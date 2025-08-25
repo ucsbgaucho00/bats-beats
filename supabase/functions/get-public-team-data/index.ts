@@ -2,9 +2,11 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 
+// --- THIS IS THE CRITICAL FIX ---
+// We must allow the 'apikey' header that the Supabase client sends automatically.
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type', // Simplified headers
+  'Access-Control-Allow-Headers': 'apikey, content-type',
 }
 
 serve(async (req) => {
@@ -20,12 +22,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceKey = Deno.env.get('SB_SERVICE_ROLE_KEY')!
     
-    // --- THIS IS THE KEY CHANGE ---
-    // We use the service_role key for Authorization, which is secure.
-    // The anon key is public and safe to include here.
     const response = await fetch(`${supabaseUrl}/rest/v1/teams?select=id,team_name,user_id,warmup_playlist_id,profiles(license)&public_share_id=eq.${shareId}`, {
       headers: {
-        'apikey': Deno.env.get('SUPABASE_ANON_KEY')!, // Use the anon key directly
+        'apikey': Deno.env.get('SUPABASE_ANON_KEY')!,
         'Authorization': `Bearer ${serviceKey}`
       }
     })
