@@ -12,6 +12,8 @@ import PublicPlayer from './PublicPlayer'
 import PublicWarmupPlayer from './PublicWarmupPlayer'
 import AdminRoutes from './AdminRoutes'
 import AdminDashboard from './AdminDashboard'
+import AdminLayout from './AdminLayout'
+import CouponManager from './CouponManager'
 
 const ProtectedRoutes = () => {
   const [session, setSession] = useState(null)
@@ -69,6 +71,12 @@ function App() {
         <Route path="/admin" element={<AdminRoutes />}>
           <Route index element={<AdminDashboard />} />
           {/* We will add routes for /admin/users, /admin/coupons etc. here later */}
+        </Route>
+<Route path="/admin" element={<AdminRoutes />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="coupons" element={<CouponManager />} />
+          </Route>
         </Route>
       </Routes>
     </div>
