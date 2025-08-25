@@ -67,17 +67,14 @@ function App() {
           <Route path="/team/:teamId/warmup" element={<WarmupPlayer />} />
         </Route>
 
-{/* --- NEW: Admin-Only Routes --- */}
+        {/* --- THIS IS THE FINAL, CORRECTED ADMIN ROUTE STRUCTURE --- */}
         <Route path="/admin" element={<AdminRoutes />}>
-          <Route index element={<AdminDashboard />} />
-          {/* We will add routes for /admin/users, /admin/coupons etc. here later */}
-        </Route>
-<Route path="/admin" element={<AdminRoutes />}>
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="coupons" element={<CouponManager />} />
           </Route>
-        </Route>      </Routes>
+        </Route>
+      </Routes>
     </div>
   )
 }
