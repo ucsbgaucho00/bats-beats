@@ -20,7 +20,7 @@ const initializePlayer = (accessToken) => {
       console.log('Public Warmup Player Ready with Device ID', ready_device_id);
       device_id = ready_device_id;
     });
-    // Add other listeners as needed (errors, etc.)
+    spotifyPlayer.addListener('not_ready', () => { device_id = null; });
     spotifyPlayer.connect();
   }
 };
@@ -37,11 +37,25 @@ export default function PublicWarmupPlayer() {
 
   useEffect(() => {
     const getPublicDataAndToken = async () => {
+      if (!shareId) return;
       try {
-        const { data: initialData, error: functionError } = await supabase.functions.invoke('get-public-team-data', { body: { shareId } })
-        if (functionError) throw functionError
+        setLoading(true);
 
-        // We need the warmup_playlist_id which is not in the public data function
+        // --- THIS IS THE CRITICAL FIX ---
+        // Use a direct fetch call to make a GET request to our function
+        const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-team-data?shareId=${shareId}`;
+        const response = await fetch(functionUrl, {
+          headers: {
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          }
+        });
+        if (!response.ok) {
+          const errorBody = await response.json();
+          throw new Error(errorBody.error || 'Failed to fetch team data');
+        }
+        const initialData = await response.json();
+        // --- END OF CRITICAL FIX ---
+
         const { data: teamDetails, error: teamError } = await supabase
             .from('teams')
             .select('warmup_playlist_id')
@@ -129,7 +143,7 @@ export default function PublicWarmupPlayer() {
   return (
     <div>
       <Link to={`/public/${shareId}`}>{'<'} Back to Player</Link>
-      <h1>{teamData.teamName}</h1>
+      <h1>{teamData?.teamName}</h1>
       <h2>Warmup Mix</h2>
       <div className="player-controls" style={{ marginTop: '20px' }}>
         <button onClick={() => handleShuffle(!isShuffle)} style={{ backgroundColor: isShuffle ? 'lightgreen' : 'white' }}>
