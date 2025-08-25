@@ -23,29 +23,43 @@ export default function PublicPlayer() {
   const [inactivePlayers, setInactivePlayers] = useState([])
 
   useEffect(() => {
-    const fetchAndRefreshToken = async () => {
-      if (!shareId) return
-      try {
-        setLoading(true)
-        const { data: initialData } = await supabase.functions.invoke('get-public-team-data', { body: { shareId } })
-        if (initialData.error) throw new Error(initialData.error)
-        
-        const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } })
-        if (refreshError) throw refreshError
-        
-        setTeamData(initialData)
-        const allPlayers = initialData.players || [];
-        setActivePlayers(allPlayers.filter(p => p.is_active).sort((a, b) => a.batting_order - b.batting_order))
-        setInactivePlayers(allPlayers.filter(p => !p.is_active))
-        setFreshToken(tokenData.new_access_token)
-      } catch (err) {
-        setError(err.message || 'Could not load team data.')
-      } finally {
-        setLoading(false)
+    const fetchAllData = async () => {
+      if (!shareId) {
+        setError('No share ID provided in the URL.');
+        setLoading(false);
+        return;
       }
-    }
-    fetchAndRefreshToken()
-  }, [shareId])
+      try {
+        setLoading(true);
+        // Step 1: Get the basic team data (including teamId) from the Edge Function
+        const { data: initialData, error: functionError } = await supabase.functions.invoke('get-public-team-data', { body: { shareId } });
+        if (functionError) throw functionError;
+        setTeamData(initialData);
+
+        // Step 2: Use the teamId from the function to fetch ALL players for that team directly
+        const { data: allPlayers, error: playersError } = await supabase
+          .from('players')
+          .select('*')
+          .eq('team_id', initialData.teamId);
+        if (playersError) throw playersError;
+        
+        // Filter players into active/inactive lists
+        setActivePlayers(allPlayers.filter(p => p.is_active).sort((a, b) => a.batting_order - b.batting_order));
+        setInactivePlayers(allPlayers.filter(p => !p.is_active));
+
+        // Step 3: Refresh the Spotify token for playback
+        const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } });
+        if (refreshError) throw refreshError;
+        setFreshToken(tokenData.new_access_token);
+
+      } catch (err) {
+        setError(err.message || 'Could not load team data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllData();
+  }, [shareId]);
 
   const handleOnDragEnd = (result) => {
     const { source, destination } = result;
@@ -100,10 +114,8 @@ export default function PublicPlayer() {
       <h1>{teamData?.teamName}</h1>
       <p>Walk-up songs</p>
       
-      {/* --- THIS IS THE NEWLY ADDED SECTION --- */}
       {teamData?.showWarmupButton && (
         <div style={{ margin: '20px 0' }}>
-          {/* The link now correctly points to the public warmup player, which we will build next */}
           <Link to={`/public/${shareId}/warmup`}>
             <button style={{fontSize: '1.1em', padding: '10px'}}>▶ Play Warmup Mix</button>
           </Link>
@@ -167,7 +179,7 @@ export default function PublicPlayer() {
                     {inactivePlayers.map((player, index) => (
                       <Draggable key={player.id} draggableId={String(player.id)} index={index}>
                         {(provided) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={{...provided.draggableProps.style, padding: '8px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#e0e0e0'}}>
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={{...provided.draggableProps.style, padding: '8px', border: '1-px solid #ccc', borderRadius: '4px', backgroundColor: '#e0e0e0'}}>
                             {player.first_name} {player.last_name}
                           </div>
                         )}
