@@ -1,7 +1,6 @@
 // supabase/functions/get-public-team-data/index.ts
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,36 +13,32 @@ serve(async (req) => {
   }
 
   try {
-    const { shareId } = await req.json()
-    if (!shareId) throw new Error('Missing shareId')
+    // --- THIS IS THE CRITICAL CHANGE ---
+    // Read the shareId from the URL query string instead of the body
+    const url = new URL(req.url)
+    const shareId = url.searchParams.get('shareId')
+    if (!shareId) throw new Error('Missing shareId query parameter')
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SB_SERVICE_ROLE_KEY')!,
-      { db: { schema: 'public' } }
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const serviceKey = Deno.env.get('SB_SERVICE_ROLE_KEY')!
 
-    const { data: team, error: teamError } = await supabaseAdmin
-      .from('teams')
-      .select('id, team_name, user_id, warmup_playlist_id')
-      .eq('public_share_id', shareId)
-      .single()
-    if (teamError) throw new Error('Team not found.')
+    const response = await fetch(`${supabaseUrl}/rest/v1/teams?select=id,team_name,user_id,warmup_playlist_id,profiles(license)&public_share_id=eq.${shareId}`, {
+      headers: {
+        'apikey': Deno.env.get('SUPABASE_ANON_KEY')!,
+        'Authorization': `Bearer ${serviceKey}`
+      }
+    })
+    
+    if (!response.ok) throw new Error('Failed to fetch team data.')
+    const teams = await response.json()
+    if (teams.length === 0) throw new Error('Team not found.')
+    const team = teams[0]
 
-    const { data: ownerProfile, error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .select('license')
-        .eq('id', team.user_id)
-        .single()
-    if (profileError) throw new Error('Could not find team owner profile.')
-
-    // --- THIS IS THE CORRECTED DATA PAYLOAD ---
-    // It no longer includes the 'players' array.
     const publicData = {
       teamName: team.team_name,
       teamId: team.id,
       ownerUserId: team.user_id,
-      showWarmupButton: ownerProfile.license === 'Home Run' && !!team.warmup_playlist_id,
+      showWarmupButton: team.profiles.license === 'Home Run' && !!team.warmup_playlist_id,
     }
 
     return new Response(JSON.stringify(publicData), {
