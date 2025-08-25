@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import LandingPage from './LandingPage'
-import PricingPage from './PricingPage'
 import Dashboard from './Dashboard'
 import PlayerManager from './PlayerManager'
 import WarmupPlayer from './WarmupPlayer'
@@ -44,7 +43,7 @@ const ProtectedRoutes = () => {
 
   if (loading) return <div>Loading session...</div>
   if (!session) return <Navigate to="/" state={{ from: location }} replace />
-  if (!profile?.license) return <Navigate to="/pricing" state={{ from: location }} replace />
+  if (!profile?.license) return <Navigate to="/" state={{ from: location }} replace />
   
   return <Outlet context={{ session }} />
 };
@@ -60,8 +59,7 @@ function App() {
         <Route path="/public/:shareId/warmup" element={<PublicWarmupPlayer />} />
 
         {/* --- Authenticated-only Routes --- */}
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route element={<ProtectedRoutes />}>
+                <Route element={<ProtectedRoutes />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/team/:teamId" element={<PlayerManager />} />
           <Route path="/team/:teamId/warmup" element={<WarmupPlayer />} />
