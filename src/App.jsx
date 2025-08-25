@@ -73,12 +73,11 @@ function App() {
           {/* We will add routes for /admin/users, /admin/coupons etc. here later */}
         </Route>
 <Route path="/admin" element={<AdminRoutes />}>
-          <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="coupons" element={<CouponManager />} />
           </Route>
-        </Route>
-      </Routes>
+        </Route>      </Routes>
     </div>
   )
 }
