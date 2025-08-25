@@ -1,6 +1,6 @@
 // src/LandingPage.jsx
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
@@ -13,7 +13,6 @@ const validatePassword = (password) => {
   return null;
 };
 
-// Basic styling for the pricing table
 const styles = {
   pricingTable: {
     display: 'flex',
@@ -30,10 +29,12 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     cursor: 'pointer',
+    transition: 'border 0.2s ease-in-out',
   },
   planTitle: {
     fontSize: '1.5em',
     fontWeight: 'bold',
+    marginTop: 0,
   },
   planPrice: {
     fontSize: '2em',
@@ -62,56 +63,76 @@ export default function LandingPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   
-  // Plan selection state
-  const [selectedPlan, setSelectedPlan] = useState(null) // 'single' or 'home_run'
+  // Plan and pricing state
+  const [selectedPlan, setSelectedPlan] = useState(null)
   const [couponCode, setCouponCode] = useState('')
-  const [totalPrice, setTotalPrice] = useState(0)
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
+  const [prices, setPrices] = useState({ single: 5.99, home_run: 9.99 })
+
+  const totalPrice = selectedPlan ? prices[selectedPlan] : 0;
 
   const handleApplyCoupon = async () => {
-    alert('Coupon functionality will be implemented in the next step!');
+    if (!couponCode) return;
+    try {
+      setLoading(true);
+      const { data: discount, error } = await supabase.functions.invoke('validate-coupon', {
+        body: { code: couponCode }
+      });
+      if (error) throw error;
+      
+      setAppliedDiscount(discount);
+      alert(`Success! Coupon "${couponCode}" applied.`);
+    } catch (error) {
+      setAppliedDiscount(null);
+      alert(error.message || 'Invalid coupon code.');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  const handleSelectPlan = (plan, price) => {
+  useEffect(() => {
+    const originalPrices = { single: 5.99, home_run: 9.99 };
+    if (appliedDiscount) {
+      const newPrices = { ...originalPrices };
+      if (appliedDiscount.discount_type === 'percent') {
+        newPrices.single = originalPrices.single * (1 - appliedDiscount.discount_value / 100);
+        newPrices.home_run = originalPrices.home_run * (1 - appliedDiscount.discount_value / 100);
+      } else if (appliedDiscount.discount_type === 'fixed_amount') {
+        newPrices.single = Math.max(0, originalPrices.single - appliedDiscount.discount_value / 100);
+        newPrices.home_run = Math.max(0, originalPrices.home_run - appliedDiscount.discount_value / 100);
+      }
+      setPrices(newPrices);
+    } else {
+      setPrices(originalPrices);
+    }
+  }, [appliedDiscount]);
+
+  const handleSelectPlan = (plan) => {
     setSelectedPlan(plan);
-    setTotalPrice(price); // This will be updated later to reflect coupon discounts
   }
 
   const handleContinueToPayment = async () => {
-    if (!selectedPlan) {
-      return alert('Please select a license plan.');
-    }
-    if (password !== confirmPassword) {
-      return alert("Passwords do not match.");
-    }
+    if (!selectedPlan) return alert('Please select a license plan.');
+    if (password !== confirmPassword) return alert("Passwords do not match.");
     const passwordError = validatePassword(password);
-    if (passwordError) {
-      return alert(passwordError);
-    }
+    if (passwordError) return alert(passwordError);
 
     setLoading(true);
     try {
-      // Step 1: Sign up the user
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { first_name: firstName, last_name: lastName }
-        }
+        email, password, options: { data: { first_name: firstName, last_name: lastName } }
       });
       if (signUpError) throw signUpError;
       if (!signUpData.user) throw new Error("Sign-up did not return a user.");
 
-      // Step 2: Immediately sign the user in to create a session
       await supabase.auth.signInWithPassword({ email, password });
       
-      // Step 3: Create the Stripe checkout session
       const priceId = selectedPlan === 'single' ? 'price_1RlcrbIjwUvbU06TzNxDJYkJ' : 'price_1RlcroIjwUvbU06TJIpGIBlT';
       const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout-session', {
-        body: { priceId, couponCode: couponCode || null }
+        body: { priceId, couponCode: appliedDiscount ? couponCode : null } // Only send the code if it's been successfully applied
       });
       if (checkoutError) throw checkoutError;
       
-      // Step 4: Redirect to Stripe
       window.location.href = checkoutData.url;
 
     } catch (error) {
@@ -160,22 +181,22 @@ export default function LandingPage() {
           
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <input type="text" placeholder="Have a Coupon Code?" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} style={{ flexGrow: 1 }} />
-            <button type="button" onClick={handleApplyCoupon} style={{ flexShrink: 0 }}>Apply</button>
+            <button type="button" onClick={handleApplyCoupon} disabled={loading} style={{ flexShrink: 0 }}>Apply</button>
           </div>
 
           <div style={styles.pricingTable}>
-            <div style={{...styles.plan, border: selectedPlan === 'single' ? '2px solid #007bff' : '1px solid #ccc'}} onClick={() => handleSelectPlan('single', 5.99)}>
+            <div style={{...styles.plan, border: selectedPlan === 'single' ? '2px solid #007bff' : '1px solid #ccc'}} onClick={() => handleSelectPlan('single')}>
               <h2 style={styles.planTitle}>Single</h2>
-              <p style={styles.planPrice}>$5.99</p>
+              <p style={styles.planPrice}>${prices.single.toFixed(2)}</p>
               <ul style={styles.featuresList}>
                 <li style={styles.featureItem}>✔ Manage <strong>1</strong> Team</li>
                 <li style={styles.featureItem}>✔ Unlimited Players</li>
                 <li style={styles.featureItem}>✔ Public Shareable Player</li>
               </ul>
             </div>
-            <div style={{...styles.plan, border: selectedPlan === 'home_run' ? '2px solid #007bff' : '1px solid #ccc'}} onClick={() => handleSelectPlan('home_run', 9.99)}>
+            <div style={{...styles.plan, border: selectedPlan === 'home_run' ? '2px solid #007bff' : '1px solid #ccc'}} onClick={() => handleSelectPlan('home_run')}>
               <h2 style={styles.planTitle}>Home Run</h2>
-              <p style={styles.planPrice}>$9.99</p>
+              <p style={styles.planPrice}>${prices.home_run.toFixed(2)}</p>
               <ul style={styles.featuresList}>
                 <li style={styles.featureItem}>✔ Manage <strong>Unlimited</strong> Teams</li>
                 <li style={styles.featureItem}>✔ Warmup Playlist Access</li>
