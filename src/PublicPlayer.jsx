@@ -27,21 +27,23 @@ export default function PublicPlayer() {
       if (!shareId) return;
       try {
         setLoading(true);
+
+        // --- THIS IS THE CRITICAL FIX ---
+        // Step 1: Call our new, secure database function (RPC)
         const { data: team, error: teamError } = await supabase
-          .from('teams')
-          .select('id, team_name, user_id, warmup_playlist_id, profiles(license)')
-          .eq('public_share_id', shareId)
+          .rpc('get_public_team_details', { share_id_in: shareId })
           .single();
         if (teamError) throw teamError;
         
         const initialData = {
             teamName: team.team_name,
-            teamId: team.id,
-            ownerUserId: team.user_id,
-            showWarmupButton: team.profiles?.license === 'Home Run' && !!team.warmup_playlist_id,
+            teamId: team.team_id,
+            ownerUserId: team.owner_user_id,
+            showWarmupButton: team.owner_license === 'Home Run' && !!team.warmup_playlist_id,
         }
         setTeamData(initialData);
 
+        // Step 2: Use the teamId to fetch all players
         const { data: allPlayers, error: playersError } = await supabase
           .from('players')
           .select('*')
@@ -51,6 +53,7 @@ export default function PublicPlayer() {
         setActivePlayers(allPlayers.filter(p => p.is_active).sort((a, b) => a.batting_order - b.batting_order));
         setInactivePlayers(allPlayers.filter(p => !p.is_active));
 
+        // Step 3: Refresh the Spotify token
         const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } });
         if (refreshError) throw refreshError;
         setFreshToken(tokenData.new_access_token);
