@@ -33,11 +33,11 @@ serve(async (req) => {
     // --- THIS IS THE CORRECTED LOGIC ---
     // Fetch only the active players and all their details
     const { data: players, error: playersError } = await supabaseAdmin
-      .from('players')
-      .select('id, player_number, first_name, last_name, song_uri, song_start_time, song_title, song_artist')
-      .eq('team_id', team.id)
-      .eq('is_active', true)
-      .order('batting_order')
+  .from('players')
+  .select('id, player_number, first_name, last_name, song_uri, song_start_time, song_title, song_artist, is_active, batting_order') // Also select is_active and batting_order
+  .eq('team_id', team.id)
+  // No is_active filter, get all players
+  .order('batting_order')
     if (playersError) throw playersError
 
     const publicData = {
