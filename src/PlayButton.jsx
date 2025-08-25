@@ -114,8 +114,6 @@ export default function PlayButton({ songUri, startTimeMs, accessTokenOverride =
   };
 
   return (
-    <button onClick={handlePlay} disabled={!songUri}>
-      {isPlaying ? 'Pause' : 'Play'}
-    </button>
+    <button onClick={handlePlay} disabled={!songUri} className="play-pause-btn">{isPlaying ? '❚❚' : '▶'}</button>
   );
 }
