@@ -42,17 +42,33 @@ export default function CouponManager() {
   const handleFormSubmit = async (e) => {
     e.preventDefault()
     try {
-      // We will add logic to create the coupon in Stripe first, then save to our DB.
-      // For now, we'll just save to our DB.
+      // --- THIS IS THE NEW LOGIC ---
+      // Step 1: Call the Edge Function to create the coupon in Stripe
+      const { data: stripeData, error: stripeError } = await supabase.functions.invoke('create-stripe-coupon', {
+        body: {
+          code: formData.code,
+          discount_type: formData.discount_type,
+          discount_value: formData.discount_value,
+        }
+      })
+      if (stripeError) throw stripeError
+
+      // Step 2: Save the coupon to our database, including the new Stripe ID
+      const couponToInsert = {
+        ...formData,
+        stripe_coupon_id: stripeData.stripe_coupon_id,
+        // Convert fixed amount to cents for our DB, if applicable
+        discount_value: formData.discount_type === 'fixed_amount' ? formData.discount_value * 100 : formData.discount_value,
+      }
+      
       const { data, error } = await supabase
         .from('coupons')
-        .insert({ ...formData })
+        .insert(couponToInsert)
         .select()
         .single()
       
       if (error) throw error
-      setCoupons([...coupons, data]) // Add to UI
-      // Reset form
+      setCoupons([...coupons, data])
       setFormData({ code: '', discount_type: 'percent', discount_value: 10, is_active: true })
     } catch (error) {
       alert('Error creating coupon: ' + error.message)
