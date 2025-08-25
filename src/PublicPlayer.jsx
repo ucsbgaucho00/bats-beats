@@ -36,9 +36,7 @@ export default function PublicPlayer() {
         
         console.log(`Step 1: Calling get-public-team-data with shareId: ${shareId}`);
         const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-team-data?shareId=${shareId}`;
-        const response = await fetch(functionUrl, {
-          headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY }
-        });
+        const response = await fetch(functionUrl);
 
         if (!response.ok) {
           const errorBody = await response.json();
