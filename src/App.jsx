@@ -9,6 +9,26 @@ import Dashboard from './Dashboard'
 import PlayerManager from './PlayerManager'
 import WarmupPlayer from './WarmupPlayer'
 import PublicPlayer from './PublicPlayer'
+import PublicWarmupPlayer from './PublicWarmupPlayer'
+
+function App() {
+  return (
+    <div className="container" style={{ padding: '50px 0 100px 0' }}>
+      <Routes>
+        {/* --- Public Routes --- */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/public/:shareId" element={<PublicPlayer />} />
+        <Route path="/public/:shareId/warmup" element={<PublicWarmupPlayer />} /> {/* <-- ADD THIS LINE */}
+
+        {/* --- Protected App Routes --- */}
+        <Route element={<ProtectedRoutes />}>
+          {/* ... (protected routes are the same) ... */}
+        </Route>
+      </Routes>
+    </div>
+  )
+}
 
 // --- NEW: A component to protect our private routes ---
 const ProtectedRoutes = () => {
