@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import TeamManager from './TeamManager'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext, Link } from 'react-router-dom' // Added Link
 
 // Your Stripe Price IDs
 const SINGLE_PRICE_ID = 'price_1RlcrbIjwUvbU06TzNxDJYkJ'
@@ -11,7 +11,7 @@ const HOME_RUN_PRICE_ID = 'price_1RlcroIjwUvbU06TJIpGIBlT'
 const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID'
 
 export default function Dashboard() {
-  const { session } = useOutletContext() // Get the session from the router context
+  const { session } = useOutletContext()
 
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
@@ -23,10 +23,11 @@ export default function Dashboard() {
     const getProfile = async () => {
       try {
         setLoading(true)
-        const { user } = session // Now this will work because session is defined
+        const { user } = session
+        // --- UPDATED: Also fetch the user's role ---
         const { data, error, status } = await supabase
           .from('profiles')
-          .select(`license, stripe_customer_id, spotify_access_token`)
+          .select(`license, stripe_customer_id, spotify_access_token, role`) // Added role
           .eq('id', user.id)
           .single()
 
@@ -91,14 +92,19 @@ export default function Dashboard() {
     }
   }
 
-  // A simple sign out function for the button
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    // The ProtectedRoutes component will automatically redirect to the landing page
   }
 
   return (
     <div className="form-widget">
+      {/* --- NEW: Admin Link --- */}
+      {profile?.role === 'admin' && (
+        <div style={{ border: '2px solid gold', padding: '10px', marginBottom: '20px', textAlign: 'center' }}>
+          <Link to="/admin">Go to Admin Dashboard</Link>
+        </div>
+      )}
+
       <h1>Welcome to Your Dashboard</h1>
       
       {loading ? (

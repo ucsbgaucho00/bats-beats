@@ -10,6 +10,8 @@ import PlayerManager from './PlayerManager'
 import WarmupPlayer from './WarmupPlayer'
 import PublicPlayer from './PublicPlayer'
 import PublicWarmupPlayer from './PublicWarmupPlayer'
+import AdminRoutes from './AdminRoutes'
+import AdminDashboard from './AdminDashboard'
 
 const ProtectedRoutes = () => {
   const [session, setSession] = useState(null)
@@ -61,6 +63,12 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/team/:teamId" element={<PlayerManager />} />
           <Route path="/team/:teamId/warmup" element={<WarmupPlayer />} />
+        </Route>
+
+{/* --- NEW: Admin-Only Routes --- */}
+        <Route path="/admin" element={<AdminRoutes />}>
+          <Route index element={<AdminDashboard />} />
+          {/* We will add routes for /admin/users, /admin/coupons etc. here later */}
         </Route>
       </Routes>
     </div>
