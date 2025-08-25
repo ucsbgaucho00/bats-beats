@@ -71,7 +71,20 @@ export default function PublicPlayer() {
     }
   }
 
-  const handleSaveOrder = async () => { /* We will implement this in the next step */ }
+  const handleSaveOrder = async () => {
+    try {
+      // Call the function with both the active and inactive player lists
+      const { error } = await supabase.functions.invoke('update-batting-order', {
+        body: { activePlayers, inactivePlayers }
+      })
+      if (error) throw error
+      
+      alert('Lineup saved successfully!')
+      setIsReordering(false) // Exit reorder mode on success
+    } catch (error) {
+      alert('Error saving lineup: ' + error.message)
+    }
+  }
 
   if (loading) return <div>Loading player...</div>
   if (error) return <div>Error: {error}</div>
@@ -100,7 +113,7 @@ export default function PublicPlayer() {
           </button>
         )}
       </div>
-
+hands
       <DragDropContext onDragEnd={handleOnDragEnd}>
         {/* --- ACTIVE PLAYERS AREA --- */}
         <Droppable droppableId="activePlayers">
