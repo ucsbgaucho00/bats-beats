@@ -180,7 +180,7 @@ export default function LandingPage() {
           <input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required autoComplete="new-password" />
           
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <input type="text" placeholder="Have a Coupon Code?" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} style={{ flexGrow: 1 }} />
+            <input type="text" placeholder="Got a coupon code?" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} style={{ flexGrow: 1 }} />
             <button type="button" onClick={handleApplyCoupon} disabled={loading} style={{ flexShrink: 0 }}>Apply</button>
           </div>
 
