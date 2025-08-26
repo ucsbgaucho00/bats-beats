@@ -12,10 +12,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # --- THIS IS THE CORRECTED LINE ---
       - name: Setup Supabase CLI
-        uses: supabase/cli@v1
-        with:
-          version: latest
+        uses: supabase/cli@v1.3.1 # Use a specific, stable version
 
       - name: Deploy all functions
         run: |
