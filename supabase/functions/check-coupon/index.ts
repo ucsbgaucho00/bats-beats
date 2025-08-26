@@ -5,7 +5,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'apikey, content-type',
+  'Access-Control-Allow-Headers': 'apikey, content-type, authorization, x-client-info',
 }
 
 serve(async (req) => {
@@ -15,9 +15,10 @@ serve(async (req) => {
 
   try {
     const { code } = await req.json()
-    if (!code) throw new Error('Coupon code is required.')
+    if (!code) {
+      throw new Error('Coupon code is required.')
+    }
 
-    // Use the admin client to look up the coupon
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SB_SERVICE_ROLE_KEY')!,
@@ -30,18 +31,19 @@ serve(async (req) => {
       .eq('code', code)
       .single()
 
-    if (error) throw new Error('Invalid coupon code.')
-    if (!coupon.is_active) throw new Error('This coupon is no longer active.')
-
-    // We don't need to check date or usage limits here, Stripe will do that.
-    // We just need to confirm it exists and is active.
+    if (error) {
+      throw new Error('Invalid coupon code.')
+    }
+    if (!coupon.is_active) {
+      throw new Error('This coupon is no longer active.')
+    }
 
     return new Response(JSON.stringify(coupon), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 404, // Use 404 for "not found" errors
+      status: 404,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

@@ -75,7 +75,7 @@ export default function LandingPage() {
     if (!couponCode) return;
     try {
       setLoading(true);
-      const { data: discount, error } = await supabase.functions.invoke('validate-coupon', {
+      const { data: discount, error } = await supabase.functions.invoke('check-coupon', {
         body: { code: couponCode }
       });
       if (error) throw error;
