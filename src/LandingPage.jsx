@@ -76,8 +76,8 @@ export default function LandingPage() {
     try {
       setLoading(true);
       const { data: discount, error } = await supabase.functions.invoke('check-coupon', {
-        body: { code: couponCode }
-      });
+  body: { code: couponCode }
+});
       if (error) throw error;
       
       setAppliedDiscount(discount);
