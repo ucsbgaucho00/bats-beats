@@ -21,4 +21,18 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-        run: npx supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
+        run: |
+          echo "--- Deploying all functions explicitly by name ---"
+          npx supabase functions deploy check-coupon --project-ref $SUPABASE_PROJECT_ID
+          npx supabase functions deploy create-checkout-session --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+          npx supabase functions deploy create-stripe-coupon --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+          npx supabase functions deploy get-public-team-data --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+          npx supabase functions deploy get-spotify-playlists --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+          npx supabase functions deploy spotify-auth --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+          npx supabase functions deploy spotify-callback --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+          npx supabase functions deploy spotify-refresh --project-ref $SUPABASE_PROJECT_ID
+          npx supabase functions deploy spotify-search --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+          npx supabase functions deploy stripe-webhook --project-ref $SUPABASE_PROJECT_ID
+          npx supabase functions deploy update-batting-order --project-ref $SUPABASE_PROJECT_ID
+          npx supabase functions deploy update-player-order --project-ref $SUPABASE_PROJECT_ID
+          echo "--- All functions deployed successfully ---"
