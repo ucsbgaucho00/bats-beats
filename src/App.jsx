@@ -57,6 +57,7 @@ function App() {
       <Routes>
         {/* --- Public Routes --- */}
         <Route path="/" element={<LandingPage />} />
+<Route path="/set-password" element={<SetPasswordPage />} />
         <Route path="/public/:shareId" element={<PublicPlayer />} />
         <Route path="/public/:shareId/warmup" element={<PublicWarmupPlayer />} />
 

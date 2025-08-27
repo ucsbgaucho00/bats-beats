@@ -3,10 +3,19 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = { /* ... */ }
+// --- THIS IS THE CRITICAL FIX ---
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') { return new Response('ok', { headers: corsHeaders }) }
+  // --- THIS HANDLES THE PREFLIGHT REQUEST ---
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  // Inside serve(async (req) => { ... })
 
   try {
     const { email, firstName, lastName, license } = await req.json()
@@ -21,26 +30,36 @@ serve(async (req) => {
     )
 
     // Verify the caller is an admin
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) throw new Error("Missing auth header.")
     const jwt = authHeader.replace('Bearer ', '');
     const { data: { user: adminUser } } = await supabaseAdmin.auth.getUser(jwt);
-    const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', adminUser!.id).single()
-    if (profile?.role !== 'admin') throw new Error('Permission denied.')
+    if (!adminUser) throw new Error("Could not verify admin user.")
+    
+    const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', adminUser.id).single()
+    if (profile?.role !== 'admin') throw new Error('Permission denied. Must be an admin.')
 
-    // Invite the new user. This creates an auth entry and sends the "Set Password" email.
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: { first_name: firstName, last_name: lastName }
-    })
+    // --- THIS IS THE CORRECTED INVITE CALL ---
+    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      email, 
+      {
+        data: { first_name: firstName, last_name: lastName },
+        redirectTo: 'https://play.batsandbeats.com/set-password'
+      }
+    )
     if (inviteError) throw inviteError
+    // --- END OF CORRECTION ---
 
-    // The trigger will create their profile. Now, update the new profile with the selected license.
+    // The rest of the logic must remain
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update({ license: license })
       .eq('id', inviteData.user.id)
     if (updateError) throw updateError
 
-    return new Response(JSON.stringify({ success: true, user: inviteData.user }), {
+    const { data: newUserProfile } = await supabaseAdmin.from('profiles').select('*').eq('id', inviteData.user.id).single()
+
+    return new Response(JSON.stringify({ success: true, user: newUserProfile }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
