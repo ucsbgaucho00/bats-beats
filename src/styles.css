@@ -1,36 +1,76 @@
 /* src/styles.css */
 
-/* --- Public Player Table Styling --- */
-.public-player-table {
-  width: 100%;
-  border-collapse: collapse; /* Removes space between cells */
-  table-layout: fixed; /* Important for controlling column widths */
+/* --- Color Palette & Global Settings --- */
+:root {
+  --mlb-blue: #002D72;
+  --mlb-red: #D50032;
+  --light-gray: #f0f2f5;
+  --text-color: #333;
 }
 
-.public-player-table th,
-.public-player-table td {
-  padding: 8px;
-  text-align: left;
-  vertical-align: middle; /* Aligns content vertically in the center */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--light-gray);
+  color: var(--text-color);
 }
 
-/* Define column widths */
-.col-number { width: 10%; }
-.col-player { width: 30%; }
-.col-song { 
-  width: 45%;
-  word-break: break-word; /* Allows long words to wrap */
-  hyphens: auto; /* Adds hyphens for better word breaks */
-}
-.col-play { 
-  width: 15%;
-  text-align: center; /* Center the play button */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-/* Style for the play/pause button */
-.play-pause-btn {
-  font-size: 1.5em; /* Make the icon larger */
-  background: none;
+/* --- Global Component Styles --- */
+button {
+  background-color: var(--mlb-blue);
+  color: white;
   border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
   cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #001f50; /* Darker blue */
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box; /* Important for consistent sizing */
+}
+
+/* --- Layout & Header --- */
+.app-header {
+  background-color: var(--mlb-blue);
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.app-header img {
+  max-width: 200px;
+  margin-bottom: 10px;
+}
+
+.page-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }

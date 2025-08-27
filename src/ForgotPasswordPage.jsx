@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
       {message && <p style={{ marginTop: '20px' }}>{message}</p>}
 
       <div style={{ marginTop: '30px' }}>
-        <Link to="/">Back to Sign In</Link>
+        <Link to="/" state={{ showSignIn: true }}>Back to Sign In</Link>
       </div>
     </div>
   )

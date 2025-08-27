@@ -16,6 +16,7 @@ import CouponManager from './CouponManager'
 import UserManager from './UserManager'
 import SetPasswordPage from './SetPasswordPage'
 import ForgotPasswordPage from './ForgotPasswordPage'
+import Layout from './Layout'
 
 
 const ProtectedRoutes = () => {
@@ -55,34 +56,33 @@ const ProtectedRoutes = () => {
 // --- THIS IS THE CORRECTED APP COMPONENT ---
 function App() {
   return (
-    <div className="container" style={{ padding: '50px 0 100px 0' }}>
-      <Routes>
+    <Routes>
+      {/* Wrap all pages in the main layout */}
+      <Route element={<Layout />}>
         {/* --- Public Routes --- */}
         <Route path="/" element={<LandingPage />} />
-<Route path="/forgot-password" element={<ForgotPasswordPage />} />
-<Route path="/set-password" element={<SetPasswordPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
         <Route path="/public/:shareId" element={<PublicPlayer />} />
         <Route path="/public/:shareId/warmup" element={<PublicWarmupPlayer />} />
 
-        {/* --- Authenticated-only Routes --- */}
-                <Route element={<ProtectedRoutes />}>
+        {/* --- Protected App Routes --- */}
+        <Route element={<ProtectedRoutes />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/team/:teamId" element={<PlayerManager />} />
           <Route path="/team/:teamId/warmup" element={<WarmupPlayer />} />
         </Route>
 
-        {/* --- THIS IS THE FINAL, CORRECTED ADMIN ROUTE STRUCTURE --- */}
+        {/* --- Admin-Only Routes --- */}
         <Route path="/admin" element={<AdminRoutes />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-<Route path="users" element={<UserManager />} />
-
             <Route path="coupons" element={<CouponManager />} />
+            <Route path="users" element={<UserManager />} />
           </Route>
         </Route>
-      </Routes>
-    </div>
+      </Route>
+    </Routes>
   )
 }
-
 export default App

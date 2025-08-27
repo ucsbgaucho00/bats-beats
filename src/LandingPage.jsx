@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 
 const validatePassword = (password) => {
@@ -55,6 +56,8 @@ const styles = {
 
 export default function LandingPage() {
   const [loading, setLoading] = useState(false)
+const [isSigningIn, setIsSigningIn] = useState(location.state?.showSignIn || false)
+  const navigate = useNavigate()
   const [isSigningIn, setIsSigningIn] = useState(false)
   const navigate = useNavigate()
 
