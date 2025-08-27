@@ -18,9 +18,10 @@ export default function TeamManager({ session, profile }) {
     const getTeamsAndPlaylists = async () => {
       try {
         setLoading(true)
+        // Updated query to fetch the new filter columns
         const { data: teamsData, error: teamsError } = await supabase
           .from('teams')
-          .select('id, team_name, public_share_id, warmup_playlist_id')
+          .select('id, team_name, public_share_id, warmup_playlist_id, filter_explicit_walkup, filter_explicit_warmup')
         if (teamsError) throw teamsError
         setTeams(teamsData)
 
@@ -28,7 +29,7 @@ export default function TeamManager({ session, profile }) {
           setLoadingPlaylists(true)
           const { data: playlistsData, error: playlistsError } = await supabase.functions.invoke('get-spotify-playlists', { method: 'GET' })
           if (playlistsError) throw playlistsError
-          setPlaylists(playlistsData || []) // Default to empty array if no playlists
+          setPlaylists(playlistsData || [])
           setLoadingPlaylists(false)
         }
       } catch (error) {
@@ -60,7 +61,7 @@ export default function TeamManager({ session, profile }) {
       const { data, error } = await supabase
         .from('teams')
         .insert({ team_name: newTeamName, user_id: session.user.id })
-        .select('id, team_name, public_share_id, warmup_playlist_id')
+        .select('id, team_name, public_share_id, warmup_playlist_id, filter_explicit_walkup, filter_explicit_warmup')
         .single()
       if (error) throw error
       setTeams([...teams, data])
@@ -105,6 +106,20 @@ export default function TeamManager({ session, profile }) {
       alert('Error updating team: ' + error.message)
     }
   }
+
+  const handleFilterToggle = async (teamId, filterType, currentValue) => {
+    try {
+      const update = { [filterType]: !currentValue };
+      const { error } = await supabase
+        .from('teams')
+        .update(update)
+        .eq('id', teamId);
+      if (error) throw error;
+      setTeams(teams.map(t => t.id === teamId ? { ...t, ...update } : t));
+    } catch (error) {
+      alert(`Error updating filter: ${error.message}`);
+    }
+  };
 
   const canCreateTeam = profile.license === 'Home Run' || (profile.license === 'Single' && teams.length === 0)
 
@@ -155,6 +170,30 @@ export default function TeamManager({ session, profile }) {
                     )}
                   </div>
                 )}
+                
+                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
+                  <strong>Filter explicit songs</strong>
+                  <div style={{ display: 'flex', gap: '20px', marginTop: '5px' }}>
+                    <label>
+                      <input 
+                        type="checkbox" 
+                        checked={team.filter_explicit_walkup}
+                        onChange={() => handleFilterToggle(team.id, 'filter_explicit_walkup', team.filter_explicit_walkup)}
+                      />
+                      Walk-up songs
+                    </label>
+                    <label>
+                      <input 
+                        type="checkbox" 
+                        checked={team.filter_explicit_warmup}
+                        onChange={() => handleFilterToggle(team.id, 'filter_explicit_warmup', team.filter_explicit_warmup)}
+                        disabled={profile.license !== 'Home Run'}
+                      />
+                      Warmup Playlist
+                    </label>
+                  </div>
+                </div>
+
                 <div style={{ fontSize: '0.8em', marginTop: '8px' }}>
                   <strong>Share Link:</strong> <input
                     type="text"
