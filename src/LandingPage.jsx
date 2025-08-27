@@ -2,10 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
-import { useNavigate } from 'react-router-dom'
-import { Link } from 'react-router-dom'
-import { useLocation, useNavigate } from 'react-router-dom'
-
+import { useNavigate, useLocation, Link } from 'react-router-dom' // Consolidated imports
 
 const validatePassword = (password) => {
   if (password.length < 12) return "Password must be at least 12 characters long.";
@@ -55,11 +52,10 @@ const styles = {
 };
 
 export default function LandingPage() {
-  const [loading, setLoading] = useState(false)
-const [isSigningIn, setIsSigningIn] = useState(location.state?.showSignIn || false)
-  const navigate = useNavigate()
-  const [isSigningIn, setIsSigningIn] = useState(false)
-  const navigate = useNavigate()
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(location.state?.showSignIn || false);
 
   // Simplified form state without coupons
   const [firstName, setFirstName] = useState('')
@@ -121,8 +117,11 @@ const [isSigningIn, setIsSigningIn] = useState(location.state?.showSignIn || fal
   }
 
   return (
-    <div>
-      <h1>Welcome to Bats & Beats</h1>
+  <div style={{ textAlign: 'center' }}>
+    {/* Use the dark logo for the light page content */}
+    <img src="/bats-beats-logo-dark.svg" alt="Bats & Beats Icon" style={{ maxWidth: '100px', marginBottom: '20px' }} />
+    
+    <h1>Welcome to Bats & Beats</h1>
       <p>The ultimate walk-up song manager for your team.</p>
       <hr />
 
