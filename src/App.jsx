@@ -13,6 +13,8 @@ import AdminRoutes from './AdminRoutes'
 import AdminDashboard from './AdminDashboard'
 import AdminLayout from './AdminLayout'
 import CouponManager from './CouponManager'
+import UserManager from './UserManager'
+
 
 const ProtectedRoutes = () => {
   const [session, setSession] = useState(null)
@@ -69,6 +71,8 @@ function App() {
         <Route path="/admin" element={<AdminRoutes />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+<Route path="users" element={<UserManager />} />
+
             <Route path="coupons" element={<CouponManager />} />
           </Route>
         </Route>

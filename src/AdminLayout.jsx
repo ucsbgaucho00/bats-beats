@@ -16,6 +16,7 @@ export default function AdminLayout() {
       <h1>Admin Area</h1>
       <nav style={navStyle}>
         <Link to="/admin">Dashboard</Link>
+<Link to="/admin/users">Users</Link>
         <Link to="/admin/coupons">Coupons</Link>
         {/* We will add links to Users and Orders later */}
       </nav>

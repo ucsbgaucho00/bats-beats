@@ -1,7 +1,6 @@
 // src/LandingPage.jsx
-// Final deployment from clean clone
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
@@ -57,56 +56,16 @@ export default function LandingPage() {
   const [isSigningIn, setIsSigningIn] = useState(false)
   const navigate = useNavigate()
 
-  // Form state
+  // Simplified form state without coupons
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  
-  // Plan and pricing state
   const [selectedPlan, setSelectedPlan] = useState(null)
-  const [couponCode, setCouponCode] = useState('')
-  const [appliedDiscount, setAppliedDiscount] = useState(null)
-  const [prices, setPrices] = useState({ single: 5.99, home_run: 9.99 })
-
+  
+  const prices = { single: 5.99, home_run: 9.99 };
   const totalPrice = selectedPlan ? prices[selectedPlan] : 0;
-
-  const handleApplyCoupon = async () => {
-    if (!couponCode) return;
-    try {
-      setLoading(true);
-      const { data: discount, error } = await supabase.functions.invoke('check-coupon', {
-  body: { code: couponCode }
-});
-      if (error) throw error;
-      
-      setAppliedDiscount(discount);
-      alert(`Success! Coupon "${couponCode}" applied.`);
-    } catch (error) {
-      setAppliedDiscount(null);
-      alert(error.message || 'Invalid coupon code.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    const originalPrices = { single: 5.99, home_run: 9.99 };
-    if (appliedDiscount) {
-      const newPrices = { ...originalPrices };
-      if (appliedDiscount.discount_type === 'percent') {
-        newPrices.single = originalPrices.single * (1 - appliedDiscount.discount_value / 100);
-        newPrices.home_run = originalPrices.home_run * (1 - appliedDiscount.discount_value / 100);
-      } else if (appliedDiscount.discount_type === 'fixed_amount') {
-        newPrices.single = Math.max(0, originalPrices.single - appliedDiscount.discount_value / 100);
-        newPrices.home_run = Math.max(0, originalPrices.home_run - appliedDiscount.discount_value / 100);
-      }
-      setPrices(newPrices);
-    } else {
-      setPrices(originalPrices);
-    }
-  }, [appliedDiscount]);
 
   const handleSelectPlan = (plan) => {
     setSelectedPlan(plan);
@@ -130,7 +89,7 @@ export default function LandingPage() {
       
       const priceId = selectedPlan === 'single' ? 'price_1RlcrbIjwUvbU06TzNxDJYkJ' : 'price_1RlcroIjwUvbU06TJIpGIBlT';
       const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout-session', {
-        body: { priceId, couponCode: appliedDiscount ? couponCode : null } // Only send the code if it's been successfully applied
+        body: { priceId, couponCode: null } // No coupon code is passed
       });
       if (checkoutError) throw checkoutError;
       
@@ -180,10 +139,7 @@ export default function LandingPage() {
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
           <input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required autoComplete="new-password" />
           
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <input type="text" placeholder="Got a coupon code?" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} style={{ flexGrow: 1 }} />
-            <button type="button" onClick={handleApplyCoupon} disabled={loading} style={{ flexShrink: 0 }}>Apply</button>
-          </div>
+          {/* The coupon code input is now completely removed */}
 
           <div style={styles.pricingTable}>
             <div style={{...styles.plan, border: selectedPlan === 'single' ? '2px solid #007bff' : '1px solid #ccc'}} onClick={() => handleSelectPlan('single')}>
