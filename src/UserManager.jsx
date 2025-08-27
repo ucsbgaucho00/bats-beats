@@ -188,4 +188,43 @@ export default function UserManager() {
                     <input name="first_name" value={editFormData.first_name} onChange={handleEditFormChange} />
                     <input name="last_name" value={editFormData.last_name} onChange={handleEditFormChange} />
                   </td>
-                  <td><input name="email" type="email" value={editFormData.email} on
+                  <td><input name="email" type="email" value={editFormData.email} onChange={handleEditFormChange} /></td>
+                  <td>
+                    <select name="license" value={editFormData.license || ''} onChange={handleEditFormChange}>
+                      <option value="">None</option>
+                      <option value="Single">Single</option>
+                      <option value="Home Run">Home Run</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select name="role" value={editFormData.role} onChange={handleEditFormChange}>
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </td>
+                  <td>
+                    <button onClick={handleUpdateUser}>Save</button>
+                    <button onClick={handleCancelEdit}>Cancel</button>
+                  </td>
+                </>
+              ) : (
+                // --- NORMAL VIEW ---
+                <>
+                  <td>{user.first_name} {user.last_name}</td>
+                  <td>{user.email}</td>
+                  <td>{user.license || 'None'}</td>
+                  <td>{user.role}</td>
+                  <td>
+                    <button onClick={() => handleEditClick(user)}>Edit</button>
+                    <button onClick={() => handleSendPasswordReset(user.email)}>Send Password Reset</button>
+                    <button onClick={() => openDeleteModal(user)} style={{color: 'red'}}>Delete</button>
+                  </td>
+                </>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
