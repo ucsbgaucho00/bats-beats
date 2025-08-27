@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import QRCode from 'qrcode.react'
+import { QRCodeSVG } from 'qrcode.react'
 
 export default function TeamManager({ session, profile }) {
   const [loading, setLoading] = useState(true)
@@ -130,7 +130,7 @@ export default function TeamManager({ session, profile }) {
     <div>
       {showQrModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 2000 }}>
-          <QRCode value={qrCodeUrl} size={256} bgColor="#ffffff" fgColor="#000000" />
+          <QRCodeSVG value={qrCodeUrl} size={256} bgColor="#ffffff" fgColor="#000000" />
           <p style={{color: 'white', marginTop: '20px'}}>{qrCodeUrl}</p>
           <button onClick={() => setShowQrModal(false)} style={{marginTop: '20px'}}>Close</button>
         </div>
