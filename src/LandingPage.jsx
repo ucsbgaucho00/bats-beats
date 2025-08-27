@@ -1,5 +1,5 @@
 // src/LandingPage.jsx
-// Triggering the first GitHub Action run on the new repository
+// Final deployment from clean clone
 
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
