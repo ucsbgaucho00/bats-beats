@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+
 
 const validatePassword = (password) => {
   if (password.length < 12) return "Password must be at least 12 characters long.";
@@ -122,13 +124,16 @@ export default function LandingPage() {
       <hr />
 
       {isSigningIn ? (
-        <form onSubmit={handleSignIn}>
-          <h2>Sign In</h2>
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-          <button type="submit" disabled={loading}>{loading ? 'Signing In...' : 'Sign In'}</button>
-          <button type="button" onClick={() => setIsSigningIn(false)} style={{ marginLeft: '10px' }}>Need an account? Sign Up</button>
-        </form>
+<form onSubmit={handleSignIn}>
+  <h2>Sign In</h2>
+  <input type="email" /* ... */ />
+  <input type="password" /* ... */ />
+  <div style={{ marginTop: '10px', textAlign: 'right' }}>
+    <Link to="/forgot-password">Forgot Password?</Link>
+  </div>
+  <button type="submit" /* ... */ >Sign In</button>
+  <button type="button" /* ... */ >Need an account? Sign Up</button>
+</form>
       ) : (
         <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <h2>Create Your Account & Choose a Plan</h2>

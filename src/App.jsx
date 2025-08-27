@@ -15,6 +15,7 @@ import AdminLayout from './AdminLayout'
 import CouponManager from './CouponManager'
 import UserManager from './UserManager'
 import SetPasswordPage from './SetPasswordPage'
+import ForgotPasswordPage from './ForgotPasswordPage'
 
 
 const ProtectedRoutes = () => {
@@ -58,6 +59,7 @@ function App() {
       <Routes>
         {/* --- Public Routes --- */}
         <Route path="/" element={<LandingPage />} />
+<Route path="/forgot-password" element={<ForgotPasswordPage />} />
 <Route path="/set-password" element={<SetPasswordPage />} />
         <Route path="/public/:shareId" element={<PublicPlayer />} />
         <Route path="/public/:shareId/warmup" element={<PublicWarmupPlayer />} />
