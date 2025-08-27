@@ -6,6 +6,7 @@
   --mlb-red: #be1f41;
   --light-gray: #f0f2f5;
   --text-color: #333;
+  --border-color: #ccc;
 }
 
 body {
@@ -13,33 +14,44 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: var(--light-gray);
   color: var(--text-color);
-}
-
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  font-size: 14px; /* --- NEW: Smaller base font size for a modern feel --- */
 }
 
 /* --- Global Component Styles --- */
 button {
-  background-color: var(--mlb-blue);
-  color: white;
-  border: none;
+  border: 2px solid var(--mlb-blue);
   padding: 10px 15px;
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s;
-}
-
-button:hover {
-  background-color: #001f50; /* Darker blue */
+  transition: background-color 0.2s, color 0.2s;
+  font-size: 1em;
 }
 
 button:disabled {
+  border-color: #ccc;
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+/* --- NEW: Button Variants --- */
+.btn-primary {
+  background-color: var(--mlb-blue);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: var(--mlb-red);
+  border-color: var(--mlb-red);
+}
+
+.btn-secondary {
+  background-color: white;
+  color: var(--mlb-blue);
+}
+.btn-secondary:hover {
+  background-color: var(--mlb-red);
+  border-color: var(--mlb-red);
+  color: white;
 }
 
 input[type="text"],
@@ -50,22 +62,22 @@ select {
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 5px;
-  box-sizing: border-box; /* Important for consistent sizing */
+  box-sizing: border-box;
+  font-size: 1em;
 }
 
 /* --- Layout & Header --- */
 .app-header {
   background-color: var(--mlb-blue);
   color: white;
-  padding: 20px;
+  padding: 15px;
   text-align: center;
 }
 
 .app-header img {
-  max-width: 200px;
-  margin-bottom: 10px;
+  max-width: 180px;
 }
 
 .page-content {
@@ -73,4 +85,32 @@ select {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* --- Form & Landing Page Specific Styles --- */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.form-container h2 {
+  font-size: 1.2em;
+  margin-top: 0;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.plan-title-caps {
+  font-size: 0.9em;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--mlb-blue);
 }
