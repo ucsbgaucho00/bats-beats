@@ -14,20 +14,20 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: var(--mlb-blue);
   color: var(--text-color);
-  font-size: 14px; 
+  font-size: 16px;
 }
 
 /* --- Main Layout & Header --- */
 .app-header {
   background-color: var(--mlb-blue);
   color: white;
-  padding: 10px 20px;
+  padding: 10px 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 .app-header .logo-link img { max-width: 160px; vertical-align: middle; }
-.hamburger-menu { font-size: 2em; background: none; border: none; color: white; cursor: pointer; padding: 0 10px; }
+.hamburger-menu { font-size: 1.5em; background: none; border: none; color: white; cursor: pointer; padding: 0 10px; width: auto; }
 
 .page-container {
   max-width: 1160px;
@@ -38,87 +38,21 @@ body {
 
 /* --- Auth Forms (Sign In / Sign Up) --- */
 .auth-container {
-  max-width: 480px; /* Slightly wider for better spacing */
+  max-width: 480px;
   margin: 20px auto;
   background-color: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
-@media (min-width: 500px) {
-  .auth-container {
-    padding: 40px;
-  }
-}
-.auth-header {
-  text-align: left; /* Align logo left */
-  margin-bottom: 20px;
-}
-.auth-header img {
-  max-width: 50px; /* Smaller logo */
-}
-
-.form-container h2 {
-  font-size: 1.8em;
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: var(--mlb-blue);
-  text-align: center;
-}
-
-.form-container .input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 15px; /* Spacing between fields */
-  margin-bottom: 20px;
-}
-
-.form-container input {
-  padding: 15px; /* More padding inside fields */
-  font-size: 1em;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* --- Pricing Table (Completely Overhauled) --- */
-.pricing-table {
-  display: flex;
-  flex-direction: column; /* Stacked on mobile by default */
-  gap: 15px;
-  margin: 30px 0;
-}
-@media (min-width: 768px) {
-  .pricing-table {
-    flex-direction: row; /* Side-by-side on desktop */
-  }
-}
-
-.plan-card {
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  flex: 1;
-}
-.plan-card.selected {
-  background-color: var(--mlb-blue);
-  color: white;
-  border-color: var(--mlb-blue);
-}
-.plan-card.selected .plan-title-caps,
-.plan-card.selected .plan-price {
-  color: white;
-}
-.plan-card.selected .pricing-features li::before {
-  color: white; /* Make checkmark white when selected */
-}
-
-.plan-title-caps { font-size: 0.9em; font-weight: bold; text-transform: uppercase; color: var(--mlb-blue); }
-.plan-price { font-size: 2.2em; margin: 10px 0; font-weight: bold; }
-.pricing-features { list-style: none; padding: 0; text-align: left; }
-.pricing-features li { padding-left: 25px; position: relative; margin-bottom: 8px; }
-.pricing-features li::before { content: '✔'; color: var(--mlb-red); position: absolute; left: 0; font-weight: bold; }
+@media (min-width: 500px) { .auth-container { padding: 40px; } }
+.auth-header { text-align: left; margin-bottom: 20px; }
+.auth-header img { max-width: 60px; }
+.form-container h2 { font-size: 1.8em; margin: 0 0 20px 0; color: var(--mlb-blue); text-align: center; }
+.form-container .input-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+.form-container input { padding: 15px; font-size: 1em; width: 100%; box-sizing: border-box; }
+.form-actions { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; }
+.form-actions .forgot-password-link { margin-top: 15px; font-size: 0.9em; color: var(--mlb-blue); text-decoration: none; }
 
 /* --- Button Variants --- */
 button { width: 100%; border: 2px solid var(--mlb-blue); padding: 12px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s ease-in-out; font-size: 1em; }
@@ -126,25 +60,46 @@ button { width: 100%; border: 2px solid var(--mlb-blue); padding: 12px 15px; bor
 .btn-primary:hover { background-color: var(--mlb-red); border-color: var(--mlb-red); }
 .btn-secondary { background-color: white; color: var(--mlb-blue); }
 .btn-secondary:hover { background-color: var(--mlb-red); border-color: var(--mlb-red); color: white; }
+.btn-icon { width: auto; padding: 8px 12px; font-size: 1.2em; }
+.btn-icon-red { background: white; color: var(--mlb-red); border-color: var(--mlb-red); }
 
 /* --- Pricing Table --- */
+.pricing-table { display: flex; flex-direction: column; gap: 15px; margin: 30px 0; }
+@media (min-width: 768px) { .pricing-table { flex-direction: row; } }
+.plan-card { border: 2px solid var(--border-color); border-radius: 8px; padding: 30px; cursor: pointer; transition: all 0.2s ease-in-out; flex: 1; }
+.plan-card.selected { background-color: var(--mlb-blue); color: white; border-color: var(--mlb-blue); }
+.plan-card.selected .plan-title-caps, .plan-card.selected .plan-price { color: white; }
+.plan-card.selected .pricing-features li::before { color: white; }
 .plan-title-caps { font-size: 0.9em; font-weight: bold; text-transform: uppercase; color: var(--mlb-blue); }
+.plan-price { font-size: 2.2em; margin: 10px 0; font-weight: bold; }
 .pricing-features { list-style: none; padding: 0; text-align: left; }
 .pricing-features li { padding-left: 25px; position: relative; margin-bottom: 8px; }
 .pricing-features li::before { content: '✔'; color: var(--mlb-red); position: absolute; left: 0; font-weight: bold; }
 
-/* --- Team Manager Card Styles --- */
-.team-card { background-color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.team-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.team-card-title { font-size: 1.4em; font-weight: bold; color: var(--mlb-blue); text-decoration: none; }
-.team-card-actions button { width: auto; margin-left: 10px; font-size: 0.9em; padding: 8px 12px; }
+/* --- Team Manager & Player Manager --- */
+.team-card, .player-card { background-color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.card-title { font-size: 1.4em; font-weight: bold; color: var(--mlb-blue); text-decoration: none; }
+.card-actions button { width: auto; margin-left: 10px; font-size: 0.9em; padding: 8px 12px; }
 .share-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .share-actions button { width: auto; flex-grow: 1; }
 
 /* --- Animated Toggle Switch --- */
+.toggle-group { display: flex; flex-direction: column; gap: 10px; }
+.toggle-label { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; }
 .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
 .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
 input:checked + .toggle-slider { background-color: var(--mlb-blue); }
 input:checked + .toggle-slider:before { transform: translateX(22px); }
+
+/* --- Warmup Player --- */
+.warmup-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 30px 0; }
+.warmup-controls .play-pause-btn { width: 50%; max-width: 150px; font-size: 2em; padding: 20px; }
+.warmup-controls .skip-shuffle-btn { width: 20%; max-width: 80px; height: 80px; border-radius: 50%; font-size: 1.5em; }
+.playlist-name { text-align: center; text-transform: uppercase; font-size: 0.9em; letter-spacing: 1px; }
+
+/* --- Public Player --- */
+.player-row.playing { font-weight: bold; color: var(--mlb-red); }
+.draggable-handle { font-size: 1.5em; cursor: grab; }

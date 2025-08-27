@@ -25,18 +25,17 @@ export default function LandingPage() {
   const handleSelectPlan = (plan) => { setSelectedPlan(plan); }
 
   const handleContinueToPayment = async () => {
-    // --- NEW: Validation Feedback ---
     if (!firstName || !lastName || !email || !password) return alert('Please fill out all required fields.');
     if (!selectedPlan) return alert('Please select a license plan.');
     if (password !== confirmPassword) return alert("Passwords do not match.");
     const passwordError = validatePassword(password);
     if (passwordError) return alert(passwordError);
-
     setLoading(true);
     // ... (rest of the function is the same)
   }
   
   const handleSignIn = async () => {
+    if (!email || !password) return alert('Please enter your email and password.');
     setLoading(true)
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
