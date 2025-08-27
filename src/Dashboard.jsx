@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import TeamManager from './TeamManager'
-import { useOutletContext, Link } from 'react-router-dom' // Added Link
+import { useOutletContext } from 'react-router-dom'
 
 // Your Stripe Price IDs
 const SINGLE_PRICE_ID = 'price_1RlcrbIjwUvbU06TzNxDJYkJ'
@@ -24,10 +24,9 @@ export default function Dashboard() {
       try {
         setLoading(true)
         const { user } = session
-        // --- UPDATED: Also fetch the user's role ---
         const { data, error, status } = await supabase
           .from('profiles')
-          .select(`license, stripe_customer_id, spotify_access_token, role`) // Added role
+          .select(`license, stripe_customer_id, spotify_access_token, role`)
           .eq('id', user.id)
           .single()
 
@@ -97,63 +96,42 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="form-widget">
-      {/* --- NEW: Admin Link --- */}
-      {profile?.role === 'admin' && (
-        <div style={{ border: '2px solid gold', padding: '10px', marginBottom: '20px', textAlign: 'center' }}>
-          <Link to="/admin">Go to Admin Dashboard</Link>
-        </div>
-      )}
-
-      <h1>Welcome to Your Dashboard</h1>
+    <div className="page-content">
+      <h1>Dashboard</h1>
       
       {loading ? (
         <p>Loading your profile...</p>
       ) : profile ? (
         <div>
-          <h2>Your License: {profile.license}</h2>
-
-          <div style={{ border: '1px solid #ccc', padding: '10px', margin: '20px 0' }}>
+          <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px', margin: '20px 0' }}>
             <h3>Spotify Connection</h3>
             {profile.spotify_access_token ? (
               <>
-                <p style={{ color: 'green' }}>✔ Connected to Spotify</p>
-                <button onClick={handleSpotifyDisconnect}>Disconnect from Spotify</button>
+                <p style={{ color: 'green', marginTop: 0 }}>✔ Connected to Spotify</p>
+                <button onClick={handleSpotifyDisconnect} className="btn-secondary">Disconnect from Spotify</button>
               </>
             ) : (
               <>
-                <p>Connect your Spotify Premium account to enable music playback.</p>
-                <button onClick={handleSpotifyConnect}>Connect to Spotify</button>
+                <p style={{ marginTop: 0 }}>Connect your Spotify Premium account to enable music playback.</p>
+                <button onClick={handleSpotifyConnect} className="btn-primary">Connect to Spotify</button>
               </>
             )}
           </div>
           
           {profile.license === 'Single' && (
-            <div>
+            <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px', margin: '20px 0' }}>
               <h3>Upgrade Your License</h3>
-              <button onClick={() => createCheckoutSession(UPGRADE_PRICE_ID)} disabled={loading}>
+              <button onClick={() => createCheckoutSession(UPGRADE_PRICE_ID)} disabled={loading} className="btn-primary">
                 Upgrade to Home Run ($5.00)
               </button>
-              <TeamManager session={session} profile={profile} />
             </div>
           )}
 
-          {profile.license === 'Home Run' && (
-            <div>
-              <h3>You have the Home Run License!</h3>
-              <p>You have unlimited access.</p>
-              <TeamManager session={session} profile={profile} />
-            </div>
-          )}
+          <TeamManager session={session} profile={profile} />
         </div>
       ) : (
         <p>Could not load your profile. Please try signing out and signing back in.</p>
       )}
-
-      <br />
-      <button className="button block" onClick={handleSignOut}>
-        Sign Out
-      </button>
     </div>
   )
 }

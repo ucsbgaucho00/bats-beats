@@ -132,109 +132,88 @@ export default function TeamManager({ session, profile }) {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 2000 }}>
           <QRCodeSVG value={qrCodeUrl} size={256} bgColor="#ffffff" fgColor="#000000" />
           <p style={{color: 'white', marginTop: '20px'}}>{qrCodeUrl}</p>
-          <button onClick={() => setShowQrModal(false)} style={{marginTop: '20px'}}>Close</button>
+          <button onClick={() => setShowQrModal(false)} style={{marginTop: '20px', width: 'auto'}} className="btn-secondary">Close</button>
         </div>
       )}
 
-      <hr />
       <h2>Manage Your Teams</h2>
       {loading && <p>Loading teams...</p>}
-      <ul>
-        {teams.map(team => (
-          <li key={team.id} style={{ marginBottom: '15px', border: '1px solid #eee', padding: '10px' }}>
-            {editingTeamId === team.id ? (
-              <>
-                <input type="text" value={editTeamName} onChange={(e) => setEditTeamName(e.target.value)} />
-                <button onClick={() => handleUpdateTeam(team.id)} style={{ marginLeft: '10px' }}>Save</button>
-                <button onClick={handleCancelClick} style={{ marginLeft: '5px' }}>Cancel</button>
-              </>
-            ) : (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Link to={`/team/${team.id}`}>{team.team_name}</Link>
-                  <button onClick={() => handleEditClick(team)} style={{ marginLeft: '10px' }}>Edit</button>
-                  <button onClick={() => handleDeleteTeam(team.id)} style={{ marginLeft: '5px' }}>Delete</button>
+      
+      {teams.map(team => (
+        <div key={team.id} className="team-card">
+          {editingTeamId === team.id ? (
+            <div>
+              <input type="text" value={editTeamName} onChange={(e) => setEditTeamName(e.target.value)} />
+              <div style={{marginTop: '10px', display: 'flex', gap: '10px'}}>
+                <button onClick={() => handleUpdateTeam(team.id)} className="btn-primary">Save</button>
+                <button onClick={handleCancelClick} className="btn-secondary">Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="team-card-header">
+                <Link to={`/team/${team.id}`}><h3 className="team-card-title">{team.team_name}</h3></Link>
+                <div className="team-card-actions">
+                  <button onClick={() => handleEditClick(team)} className="btn-secondary">Edit</button>
+                  <button onClick={() => handleDeleteTeam(team.id)} className="btn-secondary" style={{borderColor: 'var(--mlb-red)', color: 'var(--mlb-red)'}}>Delete</button>
                 </div>
-                {profile.license === 'Home Run' && (
-                  <div style={{ marginTop: '8px' }}>
-                    <label htmlFor={`playlist-select-${team.id}`}>Warmup Playlist: </label>
-                    {loadingPlaylists ? (
-                      <span>Loading playlists...</span>
-                    ) : (
-                      <select
-                        id={`playlist-select-${team.id}`}
-                        value={team.warmup_playlist_id || ''}
-                        onChange={(e) => handlePlaylistChange(team.id, e.target.value)}
-                      >
-                        <option value="">-- Select a Playlist --</option>
-                        {playlists.map(p => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                      </select>
-                    )}
-                    {team.warmup_playlist_id && (
-                      <div style={{ marginTop: '8px' }}>
-                        <Link to={`/team/${team.id}/warmup`}>
-                          <button>Play Warmup Mix</button>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
-                  <strong>Filter explicit songs</strong>
-                  <div style={{ display: 'flex', gap: '20px', marginTop: '5px' }}>
-                    <label>
-                      <input 
-                        type="checkbox" 
-                        checked={team.filter_explicit_walkup}
-                        onChange={() => handleFilterToggle(team.id, 'filter_explicit_walkup', team.filter_explicit_walkup)}
-                      />
-                      Walk-up songs
-                    </label>
-                    <label>
-                      <input 
-                        type="checkbox" 
-                        checked={team.filter_explicit_warmup}
-                        onChange={() => handleFilterToggle(team.id, 'filter_explicit_warmup', team.filter_explicit_warmup)}
-                        disabled={profile.license !== 'Home Run'}
-                      />
-                      Warmup Playlist
-                    </label>
-                  </div>
+              </div>
+              {profile.license === 'Home Run' && (
+                <div style={{ marginTop: '8px' }}>
+                  <label htmlFor={`playlist-select-${team.id}`}>Warmup Playlist: </label>
+                  {loadingPlaylists ? (
+                    <span>Loading playlists...</span>
+                  ) : (
+                    <select
+                      id={`playlist-select-${team.id}`}
+                      value={team.warmup_playlist_id || ''}
+                      onChange={(e) => handlePlaylistChange(team.id, e.target.value)}
+                    >
+                      <option value="">-- Select a Playlist --</option>
+                      {playlists.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  )}
+                  {team.warmup_playlist_id && (
+                    <div style={{ marginTop: '8px' }}>
+                      <Link to={`/team/${team.id}/warmup`}>
+                        <button className="btn-primary">Play Warmup Mix</button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
-
-                <div style={{ fontSize: '0.8em', marginTop: '8px' }}>
-                  <strong>Share Link:</strong>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
-                    <input 
-                      type="text" 
-                      readOnly 
-                      value={`${window.location.origin}/public/${team.public_share_id}`}
-                      style={{ flexGrow: 1, fontSize: '1em', border: '1px solid #ccc' }}
-                    />
-                    <button onClick={() => handleCopyUrl(`${window.location.origin}/public/${team.public_share_id}`)}>Copy</button>
-                    <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`)}>QR Code</button>
+              )}
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
+                <strong>Filter explicit songs</strong>
+                <div style={{ display: 'flex', gap: '20px', marginTop: '5px' }}>
+                  <label><input type="checkbox" checked={team.filter_explicit_walkup} onChange={() => handleFilterToggle(team.id, 'filter_explicit_walkup', team.filter_explicit_walkup)} /> Walk-up songs</label>
+                  <label><input type="checkbox" checked={team.filter_explicit_warmup} onChange={() => handleFilterToggle(team.id, 'filter_explicit_warmup', team.filter_explicit_warmup)} disabled={profile.license !== 'Home Run'} /> Warmup Playlist</label>
+                </div>
+              </div>
+              <div style={{ fontSize: '0.8em', marginTop: '15px' }}>
+                <strong>Share Link:</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
+                  <input type="text" readOnly value={`${window.location.origin}/public/${team.public_share_id}`} style={{flexGrow: 1}} />
+                  <div className="team-card-actions">
+                    <button onClick={() => handleCopyUrl(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">Copy</button>
+                    <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">QR Code</button>
                   </div>
                 </div>
               </div>
-            )}
-          </li>
-        ))}
-      </ul>
+            </div>
+          )}
+        </div>
+      ))}
+      
       {canCreateTeam && (
-        <form onSubmit={handleCreateTeam}>
+        <div className="team-card">
           <h3>Create New Team</h3>
-          <input
-            type="text"
-            placeholder="Enter new team name"
-            value={newTeamName}
-            onChange={(e) => setNewTeamName(e.target.value)}
-            required
-          />
-          <button type="submit">Create Team</button>
-        </form>
+          <form onSubmit={handleCreateTeam}>
+            <input type="text" placeholder="Enter new team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required />
+            <button type="submit" className="btn-primary">Create Team</button>
+          </form>
+        </div>
       )}
     </div>
   )

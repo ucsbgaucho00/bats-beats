@@ -6,35 +6,89 @@
   --mlb-red: #be1f41;
   --light-gray: #f0f2f5;
   --text-color: #333;
-  --border-color: #ccc;
+  --border-color: #e0e0e0;
 }
 
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
-  background-color: var(--light-gray);
+  background-color: var(--mlb-blue);
   color: var(--text-color);
-  font-size: 14px; /* --- NEW: Smaller base font size for a modern feel --- */
+  font-size: 14px;
 }
 
-/* --- Global Component Styles --- */
+/* --- Main Layout & Header --- */
+.app-header {
+  background-color: var(--mlb-blue);
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-header .logo-link img {
+  max-width: 180px;
+  vertical-align: middle;
+}
+
+.hamburger-menu {
+  font-size: 2em;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.page-container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 20px 15px;
+}
+
+/* --- Auth Forms (Sign In / Sign Up) --- */
+.auth-container {
+  max-width: 450px;
+  margin: 30px auto;
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.auth-container h2 {
+  font-size: 1.5em;
+  margin-top: 0;
+  color: var(--mlb-blue);
+}
+
+.auth-container .form-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.auth-container .forgot-password-link {
+  margin-top: 15px;
+  font-size: 0.9em;
+}
+
+/* --- Button Variants --- */
 button {
+  width: 100%;
   border: 2px solid var(--mlb-blue);
-  padding: 10px 15px;
+  padding: 12px 15px;
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all 0.2s ease-in-out;
   font-size: 1em;
 }
 
-button:disabled {
-  border-color: #ccc;
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-/* --- NEW: Button Variants --- */
 .btn-primary {
   background-color: var(--mlb-blue);
   color: white;
@@ -54,63 +108,53 @@ button:disabled {
   color: white;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-select {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
+/* --- Team Manager Card Styles --- */
+.team-card {
+  background-color: #fff;
   border: 1px solid var(--border-color);
-  border-radius: 5px;
-  box-sizing: border-box;
-  font-size: 1em;
-}
-
-/* --- Layout & Header --- */
-.app-header {
-  background-color: var(--mlb-blue);
-  color: white;
-  padding: 15px;
-  text-align: center;
-}
-
-.app-header img {
-  max-width: 180px;
-}
-
-.page-content {
-  background-color: white;
-  padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-/* --- Form & Landing Page Specific Styles --- */
-.form-container {
+.team-card-header {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-align: center;
-}
-
-.form-container h2 {
-  font-size: 1.2em;
-  margin-top: 0;
-}
-
-.form-actions {
-  display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-top: 15px;
+  margin-bottom: 15px;
 }
 
-.plan-title-caps {
-  font-size: 0.9em;
+.team-card-title {
+  font-size: 1.4em;
   font-weight: bold;
-  text-transform: uppercase;
   color: var(--mlb-blue);
+}
+
+.team-card-actions button {
+  width: auto;
+  margin-left: 10px;
+  font-size: 0.9em;
+  padding: 8px 12px;
+}
+
+/* --- Admin Tab Navigation --- */
+.admin-tabs {
+  display: flex;
+  gap: 20px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 20px;
+}
+
+.admin-tabs a {
+  padding: 10px 5px;
+  text-decoration: none;
+  color: var(--text-color);
+  font-weight: bold;
+  border-bottom: 3px solid transparent;
+}
+
+.admin-tabs a.active {
+  color: var(--mlb-blue);
+  border-bottom-color: var(--mlb-blue);
 }
