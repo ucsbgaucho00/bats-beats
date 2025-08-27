@@ -23,7 +23,7 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
           echo "--- Deploying all functions explicitly by name ---"
-          npx supabase functions deploy check-coupon --project-ref $SUPABASE_PROJECT_ID
+          npx supabase functions deploy check-coupon --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
           npx supabase functions deploy create-checkout-session --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
           npx supabase functions deploy create-stripe-coupon --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
           npx supabase functions deploy get-public-team-data --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
