@@ -152,22 +152,23 @@ export default function TeamManager({ session, profile }) {
           ) : (
             <div>
               <div className="team-card-header">
-                <Link to={`/team/${team.id}`}><h3 className="team-card-title">{team.team_name}</h3></Link>
+                <Link to={`/team/${team.id}`} className="team-card-title">{team.team_name}</Link>
                 <div className="team-card-actions">
                   <button onClick={() => handleEditClick(team)} className="btn-secondary">Edit</button>
                   <button onClick={() => handleDeleteTeam(team.id)} className="btn-secondary" style={{borderColor: 'var(--mlb-red)', color: 'var(--mlb-red)'}}>Delete</button>
                 </div>
               </div>
               {profile.license === 'Home Run' && (
-                <div style={{ marginTop: '8px' }}>
-                  <label htmlFor={`playlist-select-${team.id}`}>Warmup Playlist: </label>
+                <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #f0f0f0' }}>
+                  <label htmlFor={`playlist-select-${team.id}`} style={{fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.8em'}}>Warmup Playlist</label>
                   {loadingPlaylists ? (
-                    <span>Loading playlists...</span>
+                    <p>Loading playlists...</p>
                   ) : (
                     <select
                       id={`playlist-select-${team.id}`}
                       value={team.warmup_playlist_id || ''}
                       onChange={(e) => handlePlaylistChange(team.id, e.target.value)}
+                      style={{marginTop: '5px'}}
                     >
                       <option value="">-- Select a Playlist --</option>
                       {playlists.map(p => (
@@ -176,7 +177,7 @@ export default function TeamManager({ session, profile }) {
                     </select>
                   )}
                   {team.warmup_playlist_id && (
-                    <div style={{ marginTop: '8px' }}>
+                    <div style={{ marginTop: '10px' }}>
                       <Link to={`/team/${team.id}/warmup`}>
                         <button className="btn-primary">Play Warmup Mix</button>
                       </Link>
@@ -184,21 +185,30 @@ export default function TeamManager({ session, profile }) {
                   )}
                 </div>
               )}
-              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
-                <strong>Filter explicit songs</strong>
-                <div style={{ display: 'flex', gap: '20px', marginTop: '5px' }}>
-                  <label><input type="checkbox" checked={team.filter_explicit_walkup} onChange={() => handleFilterToggle(team.id, 'filter_explicit_walkup', team.filter_explicit_walkup)} /> Walk-up songs</label>
-                  <label><input type="checkbox" checked={team.filter_explicit_warmup} onChange={() => handleFilterToggle(team.id, 'filter_explicit_warmup', team.filter_explicit_warmup)} disabled={profile.license !== 'Home Run'} /> Warmup Playlist</label>
+              <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #f0f0f0' }}>
+                <strong style={{textTransform: 'uppercase', fontSize: '0.8em'}}>Filter explicit songs</strong>
+                <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
+                    <span className="toggle-switch">
+                      <input type="checkbox" checked={team.filter_explicit_walkup} onChange={() => handleFilterToggle(team.id, 'filter_explicit_walkup', team.filter_explicit_walkup)} />
+                      <span className="toggle-slider"></span>
+                    </span>
+                    Walk-up songs
+                  </label>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
+                    <span className="toggle-switch">
+                      <input type="checkbox" checked={team.filter_explicit_warmup} onChange={() => handleFilterToggle(team.id, 'filter_explicit_warmup', team.filter_explicit_warmup)} disabled={profile.license !== 'Home Run'} />
+                      <span className="toggle-slider"></span>
+                    </span>
+                    Warmup Playlist
+                  </label>
                 </div>
               </div>
-              <div style={{ fontSize: '0.8em', marginTop: '15px' }}>
-                <strong>Share Link:</strong>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
-                  <input type="text" readOnly value={`${window.location.origin}/public/${team.public_share_id}`} style={{flexGrow: 1}} />
-                  <div className="team-card-actions">
-                    <button onClick={() => handleCopyUrl(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">Copy</button>
-                    <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">QR Code</button>
-                  </div>
+              <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #f0f0f0' }}>
+                <strong style={{textTransform: 'uppercase', fontSize: '0.8em'}}>Share Link</strong>
+                <div className="share-actions">
+                  <button onClick={() => handleCopyUrl(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">Copy</button>
+                  <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">QR Code</button>
                 </div>
               </div>
             </div>
@@ -209,9 +219,9 @@ export default function TeamManager({ session, profile }) {
       {canCreateTeam && (
         <div className="team-card">
           <h3>Create New Team</h3>
-          <form onSubmit={handleCreateTeam}>
-            <input type="text" placeholder="Enter new team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required />
-            <button type="submit" className="btn-primary">Create Team</button>
+          <form onSubmit={handleCreateTeam} style={{display: 'flex', gap: '10px'}}>
+            <input type="text" placeholder="Enter new team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required style={{marginBottom: 0}} />
+            <button type="submit" className="btn-primary" style={{width: 'auto'}}>Create Team</button>
           </form>
         </div>
       )}

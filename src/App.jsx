@@ -46,11 +46,16 @@ const ProtectedRoutes = () => {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (loading) return <div>Loading session...</div>
-  if (!session) return <Navigate to="/" state={{ from: location }} replace />
-  if (!profile?.license) return <Navigate to="/" state={{ from: location }} replace />
+  // --- NEW: Redirect from root to dashboard if logged in and licensed ---
+  if (session && profile?.license && location.pathname === '/') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (loading) return <div>Loading session...</div>;
+  if (!session) return <Navigate to="/" state={{ from: location }} replace />;
+  if (!profile?.license) return <Navigate to="/" replace />;
   
-  return <Outlet context={{ session }} />
+  return <Outlet context={{ session }} />;
 };
 
 // --- THIS IS THE CORRECTED APP COMPONENT ---

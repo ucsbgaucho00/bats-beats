@@ -26,135 +26,55 @@ body {
   justify-content: space-between;
   align-items: center;
 }
-
-.app-header .logo-link img {
-  max-width: 180px;
-  vertical-align: middle;
-}
-
-.hamburger-menu {
-  font-size: 2em;
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  padding: 0 10px;
-}
+.app-header .logo-link img { max-width: 160px; vertical-align: middle; }
+.hamburger-menu { font-size: 2em; background: none; border: none; color: white; cursor: pointer; padding: 0 10px; }
 
 .page-container {
   max-width: 1160px;
   margin: 0 auto;
   padding: 20px 15px;
 }
+.page-content { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 
 /* --- Auth Forms (Sign In / Sign Up) --- */
 .auth-container {
   max-width: 450px;
-  margin: 30px auto;
+  margin: 20px auto;
   background-color: white;
   padding: 30px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   text-align: center;
 }
-
-.auth-container h2 {
-  font-size: 1.5em;
-  margin-top: 0;
-  color: var(--mlb-blue);
-}
-
-.auth-container .form-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.auth-container .forgot-password-link {
-  margin-top: 15px;
-  font-size: 0.9em;
-}
+.auth-container h2 { font-size: 1.5em; margin-top: 0; color: var(--mlb-blue); text-transform: uppercase; letter-spacing: 1px; }
+.auth-container .form-actions { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; }
+.auth-container .forgot-password-link { margin-top: 15px; font-size: 0.9em; }
 
 /* --- Button Variants --- */
-button {
-  width: 100%;
-  border: 2px solid var(--mlb-blue);
-  padding: 12px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s ease-in-out;
-  font-size: 1em;
-}
+button { width: 100%; border: 2px solid var(--mlb-blue); padding: 12px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s ease-in-out; font-size: 1em; }
+.btn-primary { background-color: var(--mlb-blue); color: white; }
+.btn-primary:hover { background-color: var(--mlb-red); border-color: var(--mlb-red); }
+.btn-secondary { background-color: white; color: var(--mlb-blue); }
+.btn-secondary:hover { background-color: var(--mlb-red); border-color: var(--mlb-red); color: white; }
 
-.btn-primary {
-  background-color: var(--mlb-blue);
-  color: white;
-}
-.btn-primary:hover {
-  background-color: var(--mlb-red);
-  border-color: var(--mlb-red);
-}
-
-.btn-secondary {
-  background-color: white;
-  color: var(--mlb-blue);
-}
-.btn-secondary:hover {
-  background-color: var(--mlb-red);
-  border-color: var(--mlb-red);
-  color: white;
-}
+/* --- Pricing Table --- */
+.plan-title-caps { font-size: 0.9em; font-weight: bold; text-transform: uppercase; color: var(--mlb-blue); }
+.pricing-features { list-style: none; padding: 0; text-align: left; }
+.pricing-features li { padding-left: 25px; position: relative; margin-bottom: 8px; }
+.pricing-features li::before { content: '✔'; color: var(--mlb-red); position: absolute; left: 0; font-weight: bold; }
 
 /* --- Team Manager Card Styles --- */
-.team-card {
-  background-color: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
+.team-card { background-color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.team-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.team-card-title { font-size: 1.4em; font-weight: bold; color: var(--mlb-blue); text-decoration: none; }
+.team-card-actions button { width: auto; margin-left: 10px; font-size: 0.9em; padding: 8px 12px; }
+.share-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.share-actions button { width: auto; flex-grow: 1; }
 
-.team-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.team-card-title {
-  font-size: 1.4em;
-  font-weight: bold;
-  color: var(--mlb-blue);
-}
-
-.team-card-actions button {
-  width: auto;
-  margin-left: 10px;
-  font-size: 0.9em;
-  padding: 8px 12px;
-}
-
-/* --- Admin Tab Navigation --- */
-.admin-tabs {
-  display: flex;
-  gap: 20px;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 20px;
-}
-
-.admin-tabs a {
-  padding: 10px 5px;
-  text-decoration: none;
-  color: var(--text-color);
-  font-weight: bold;
-  border-bottom: 3px solid transparent;
-}
-
-.admin-tabs a.active {
-  color: var(--mlb-blue);
-  border-bottom-color: var(--mlb-blue);
-}
+/* --- Animated Toggle Switch --- */
+.toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
+.toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .toggle-slider { background-color: var(--mlb-blue); }
+input:checked + .toggle-slider:before { transform: translateX(22px); }

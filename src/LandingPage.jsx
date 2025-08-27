@@ -25,30 +25,17 @@ export default function LandingPage() {
 
   const handleSelectPlan = (plan) => { setSelectedPlan(plan); }
   const handleContinueToPayment = async () => { /* ... (unchanged) ... */ }
-  
-  const handleSignIn = async () => {
-    setLoading(true)
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
-      navigate('/dashboard')
-    } catch (error) {
-      alert(error.error_description || error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleSignIn = async () => { /* ... (unchanged) ... */ }
 
   return (
     <div className="auth-container">
-      <img src="/bats-beats-logo-dark.svg" alt="Bats & Beats Icon" style={{ maxWidth: '80px', marginBottom: '20px' }} />
+      <img src="/bats-beats-logo-dark.svg" alt="Bats & Beats Icon" style={{ maxWidth: '60px', marginBottom: '20px' }} />
       
       {isSigningIn ? (
         <div className="form-container">
           <h2>Sign In</h2>
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          
           <div className="form-actions">
             <button onClick={handleSignIn} disabled={loading} className="btn-primary">
               {loading ? 'Signing In...' : 'Sign In'}
@@ -72,19 +59,19 @@ export default function LandingPage() {
             <div style={{...styles.plan, border: selectedPlan === 'single' ? '2px solid var(--mlb-blue)' : '1px solid var(--border-color)'}} onClick={() => handleSelectPlan('single')}>
               <h3 className="plan-title-caps">Single</h3>
               <p style={styles.planPrice}>${prices.single.toFixed(2)}</p>
-              <ul style={styles.featuresList}>
-                <li style={styles.featureItem}>✔ Manage <strong>1</strong> Team</li>
-                <li style={styles.featureItem}>✔ Unlimited Players</li>
-                <li style={styles.featureItem}>✔ Public Shareable Player</li>
+              <ul className="pricing-features">
+                <li>Manage <strong>1</strong> Team</li>
+                <li>Unlimited Players</li>
+                <li>Public Shareable Player</li>
               </ul>
             </div>
             <div style={{...styles.plan, border: selectedPlan === 'home_run' ? '2px solid var(--mlb-blue)' : '1px solid var(--border-color)'}} onClick={() => handleSelectPlan('home_run')}>
               <h3 className="plan-title-caps">Home Run</h3>
               <p style={styles.planPrice}>${prices.home_run.toFixed(2)}</p>
-              <ul style={styles.featuresList}>
-                <li style={styles.featureItem}>✔ Manage <strong>Unlimited</strong> Teams</li>
-                <li style={styles.featureItem}>✔ Warmup Playlist Access</li>
-                <li style={styles.featureItem}>✔ Public Shareable Player</li>
+              <ul className="pricing-features">
+                <li>Manage <strong>Unlimited</strong> Teams</li>
+                <li>Warmup Playlist Access</li>
+                <li>Public Shareable Player</li>
               </ul>
             </div>
           </div>

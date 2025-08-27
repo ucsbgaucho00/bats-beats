@@ -12,7 +12,6 @@ const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID'
 
 export default function Dashboard() {
   const { session } = useOutletContext()
-
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
 
@@ -95,10 +94,9 @@ export default function Dashboard() {
     await supabase.auth.signOut()
   }
 
-  return (
+ return (
     <div className="page-content">
       <h1>Dashboard</h1>
-      
       {loading ? (
         <p>Loading your profile...</p>
       ) : profile ? (
