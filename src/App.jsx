@@ -14,6 +14,7 @@ import AdminDashboard from './AdminDashboard'
 import AdminLayout from './AdminLayout'
 import CouponManager from './CouponManager'
 import UserManager from './UserManager'
+import SetPasswordPage from './SetPasswordPage'
 
 
 const ProtectedRoutes = () => {
