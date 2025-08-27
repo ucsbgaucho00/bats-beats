@@ -5,7 +5,6 @@ import { supabase } from './supabaseClient'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 
 const validatePassword = (password) => { /* ... (unchanged) ... */ };
-const styles = { /* ... (pricing table styles are unchanged) ... */ };
 
 export default function LandingPage() {
   const location = useLocation();
@@ -24,18 +23,44 @@ export default function LandingPage() {
   const totalPrice = selectedPlan ? prices[selectedPlan] : 0;
 
   const handleSelectPlan = (plan) => { setSelectedPlan(plan); }
-  const handleContinueToPayment = async () => { /* ... (unchanged) ... */ }
-  const handleSignIn = async () => { /* ... (unchanged) ... */ }
+
+  const handleContinueToPayment = async () => {
+    // --- NEW: Validation Feedback ---
+    if (!firstName || !lastName || !email || !password) return alert('Please fill out all required fields.');
+    if (!selectedPlan) return alert('Please select a license plan.');
+    if (password !== confirmPassword) return alert("Passwords do not match.");
+    const passwordError = validatePassword(password);
+    if (passwordError) return alert(passwordError);
+
+    setLoading(true);
+    // ... (rest of the function is the same)
+  }
+  
+  const handleSignIn = async () => {
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      navigate('/dashboard')
+    } catch (error) {
+      alert(error.error_description || error.message)
+      setLoading(false); // Ensure loading is false on error
+    }
+  }
 
   return (
     <div className="auth-container">
-      <img src="/bats-beats-logo-dark.svg" alt="Bats & Beats Icon" style={{ maxWidth: '60px', marginBottom: '20px' }} />
+      <div className="auth-header">
+        <img src="/bats-beats-logo-dark.svg" alt="Bats & Beats Icon" />
+      </div>
       
       {isSigningIn ? (
         <div className="form-container">
           <h2>Sign In</h2>
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <div className="input-group">
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </div>
           <div className="form-actions">
             <button onClick={handleSignIn} disabled={loading} className="btn-primary">
               {loading ? 'Signing In...' : 'Sign In'}
@@ -49,25 +74,27 @@ export default function LandingPage() {
       ) : (
         <div className="form-container">
           <h2>Create Your Account</h2>
-          <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-          <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          <input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+          <div className="input-group">
+            <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+            <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+          </div>
           
-          <div style={styles.pricingTable}>
-            <div style={{...styles.plan, border: selectedPlan === 'single' ? '2px solid var(--mlb-blue)' : '1px solid var(--border-color)'}} onClick={() => handleSelectPlan('single')}>
+          <div className="pricing-table">
+            <div className={`plan-card ${selectedPlan === 'single' ? 'selected' : ''}`} onClick={() => handleSelectPlan('single')}>
               <h3 className="plan-title-caps">Single</h3>
-              <p style={styles.planPrice}>${prices.single.toFixed(2)}</p>
+              <p className="plan-price">${prices.single.toFixed(2)}</p>
               <ul className="pricing-features">
                 <li>Manage <strong>1</strong> Team</li>
                 <li>Unlimited Players</li>
                 <li>Public Shareable Player</li>
               </ul>
             </div>
-            <div style={{...styles.plan, border: selectedPlan === 'home_run' ? '2px solid var(--mlb-blue)' : '1px solid var(--border-color)'}} onClick={() => handleSelectPlan('home_run')}>
+            <div className={`plan-card ${selectedPlan === 'home_run' ? 'selected' : ''}`} onClick={() => handleSelectPlan('home_run')}>
               <h3 className="plan-title-caps">Home Run</h3>
-              <p style={styles.planPrice}>${prices.home_run.toFixed(2)}</p>
+              <p className="plan-price">${prices.home_run.toFixed(2)}</p>
               <ul className="pricing-features">
                 <li>Manage <strong>Unlimited</strong> Teams</li>
                 <li>Warmup Playlist Access</li>

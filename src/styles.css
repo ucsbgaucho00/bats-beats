@@ -14,7 +14,7 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: var(--mlb-blue);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: 14px; 
 }
 
 /* --- Main Layout & Header --- */
@@ -38,17 +38,87 @@ body {
 
 /* --- Auth Forms (Sign In / Sign Up) --- */
 .auth-container {
-  max-width: 450px;
+  max-width: 480px; /* Slightly wider for better spacing */
   margin: 20px auto;
   background-color: white;
-  padding: 30px;
+  padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+@media (min-width: 500px) {
+  .auth-container {
+    padding: 40px;
+  }
+}
+.auth-header {
+  text-align: left; /* Align logo left */
+  margin-bottom: 20px;
+}
+.auth-header img {
+  max-width: 50px; /* Smaller logo */
+}
+
+.form-container h2 {
+  font-size: 1.8em;
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--mlb-blue);
   text-align: center;
 }
-.auth-container h2 { font-size: 1.5em; margin-top: 0; color: var(--mlb-blue); text-transform: uppercase; letter-spacing: 1px; }
-.auth-container .form-actions { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; }
-.auth-container .forgot-password-link { margin-top: 15px; font-size: 0.9em; }
+
+.form-container .input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Spacing between fields */
+  margin-bottom: 20px;
+}
+
+.form-container input {
+  padding: 15px; /* More padding inside fields */
+  font-size: 1em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* --- Pricing Table (Completely Overhauled) --- */
+.pricing-table {
+  display: flex;
+  flex-direction: column; /* Stacked on mobile by default */
+  gap: 15px;
+  margin: 30px 0;
+}
+@media (min-width: 768px) {
+  .pricing-table {
+    flex-direction: row; /* Side-by-side on desktop */
+  }
+}
+
+.plan-card {
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  flex: 1;
+}
+.plan-card.selected {
+  background-color: var(--mlb-blue);
+  color: white;
+  border-color: var(--mlb-blue);
+}
+.plan-card.selected .plan-title-caps,
+.plan-card.selected .plan-price {
+  color: white;
+}
+.plan-card.selected .pricing-features li::before {
+  color: white; /* Make checkmark white when selected */
+}
+
+.plan-title-caps { font-size: 0.9em; font-weight: bold; text-transform: uppercase; color: var(--mlb-blue); }
+.plan-price { font-size: 2.2em; margin: 10px 0; font-weight: bold; }
+.pricing-features { list-style: none; padding: 0; text-align: left; }
+.pricing-features li { padding-left: 25px; position: relative; margin-bottom: 8px; }
+.pricing-features li::before { content: '✔'; color: var(--mlb-red); position: absolute; left: 0; font-weight: bold; }
 
 /* --- Button Variants --- */
 button { width: 100%; border: 2px solid var(--mlb-blue); padding: 12px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s ease-in-out; font-size: 1em; }
