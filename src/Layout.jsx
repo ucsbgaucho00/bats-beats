@@ -1,15 +1,46 @@
 // src/Layout.jsx
 
-import { useState } from 'react'
-import { Outlet, Link, useOutletContext } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Outlet, Link } from 'react-router-dom'
+import { supabase } from './supabaseClient' // Import supabase
 import PopoverMenu from './PopoverMenu'
 
 export default function Layout() {
   const [showMenu, setShowMenu] = useState(false);
-  // useOutletContext can be null if we're on a public page, so we handle that
-  const context = useOutletContext();
-  const session = context?.session;
-  const profile = context?.profile;
+  
+  // --- THIS IS THE CRITICAL FIX ---
+  // The layout now manages its own session and profile state
+  const [session, setSession] = useState(null);
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    const getSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      if (session) {
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('*') // Fetch the full profile for the menu
+          .eq('id', session.user.id)
+          .single();
+        setProfile(userProfile);
+      }
+    };
+    getSessionAndProfile();
+
+    // Also listen for changes to update in real-time (e.g., after logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (!session) {
+        setProfile(null); // Clear profile on logout
+      } else {
+        getSessionAndProfile(); // Re-fetch profile on login
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+  // --- END OF FIX ---
 
   const handleMenuClick = () => {
     setShowMenu(!showMenu);
@@ -21,7 +52,6 @@ export default function Layout() {
         <Link to={session ? "/dashboard" : "/"} className="logo-link">
           <img src="/bats-beats-logo-wordmark-light.svg" alt="Bats & Beats Logo" />
         </Link>
-        {/* Only show the menu button if the user is logged in */}
         {session && (
           <button onClick={handleMenuClick} className="hamburger-menu">
             ☰
@@ -29,11 +59,10 @@ export default function Layout() {
         )}
       </header>
       <main>
-        {/* The Outlet now correctly passes the context down to Dashboard, etc. */}
+        {/* We still use Outlet, but now the Layout is independent */}
         <Outlet context={{ session, profile }} />
       </main>
 
-      {/* The PopoverMenu is rendered here, outside the main content */}
       {showMenu && <PopoverMenu profile={profile} session={session} closeMenu={() => setShowMenu(false)} />}
     </div>
   )
