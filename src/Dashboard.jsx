@@ -10,7 +10,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
   
-  const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID' // Ensure this is correct
+  const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID'; // Ensure this is correct
 
   useEffect(() => {
     const getProfile = async () => {
@@ -33,13 +33,33 @@ export default function Dashboard() {
     getProfile()
   }, [session]);
 
-  const createCheckoutSession = async (priceId) => { /* ... (unchanged) ... */ }
-  const handleSpotifyConnect = async () => { /* ... (unchanged) ... */ }
-  const handleSpotifyDisconnect = async () => { // <-- Add async
+  const createCheckoutSession = async (priceId) => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', { body: { priceId } })
+      if (error) throw error
+      window.location.href = data.url
+    } catch (error) {
+      alert('Error: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // --- THIS IS THE MISSING FUNCTION ---
+  const handleSpotifyConnect = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('spotify-auth', { method: 'GET' })
+      if (error) throw new Error('Failed to get Spotify auth URL: ' + error.message)
+      window.location.href = data.url
+    } catch (error) {
+      alert(error.message)
+    }
+  }
+
+  const handleSpotifyDisconnect = async () => {
     if (window.confirm('Are you sure you want to disconnect your Spotify account?')) {
       try {
-        // --- THIS IS THE FIX ---
-        // Add await to ensure the database call completes
         const { error } = await supabase
           .from('profiles')
           .update({
@@ -48,8 +68,6 @@ export default function Dashboard() {
           })
           .eq('id', session.user.id)
         if (error) throw error
-        
-        // This part is now safe to run
         setProfile({ ...profile, spotify_access_token: null })
         alert('Successfully disconnected from Spotify.')
       } catch (error) {
@@ -58,7 +76,7 @@ export default function Dashboard() {
     }
   }
 
-   return (
+  return (
     <div className="page-content">
       <h1>Dashboard</h1>
       
