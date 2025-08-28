@@ -90,10 +90,9 @@ export default function TeamManager({ session, profile }) {
     }
   };
 
-  const handleCopyUrl = (url, teamId) => { // <-- Add teamId
+  const handleCopyUrl = (url, teamId) => {
     navigator.clipboard.writeText(url).then(async () => {
       alert('Share link copied to clipboard!');
-      // --- NEW: Track this event ---
       await supabase.from('events').insert({
         event_name: 'copy_share_url',
         user_id: session.user.id,
@@ -104,10 +103,9 @@ export default function TeamManager({ session, profile }) {
     });
   };
 
-  const handleShowQrCode = async (url, teamId) => { // <-- Add teamId
+  const handleShowQrCode = async (url, teamId) => {
     setQrCodeUrl(url);
     setShowQrModal(true);
-    // --- NEW: Track this event ---
     await supabase.from('events').insert({
       event_name: 'generate_qr_code',
       user_id: session.user.id,
@@ -128,6 +126,7 @@ export default function TeamManager({ session, profile }) {
       )}
 
       <h2>Manage Your Teams</h2>
+      {loading && <p>Loading teams...</p>}
       
       {teams.map(team => (
         <div key={team.id} className="card team-card">
@@ -138,10 +137,10 @@ export default function TeamManager({ session, profile }) {
                 <i className="fa-solid fa-pencil"></i>
                 <span className="btn-text">Edit</span>
               </button>
-              <Link to={`/public/${team.public_share_id}`} className="btn-primary btn-icon">
-                 <i className="fa-solid fa-play"></i>
-                 <span className="btn-text">Play</span>
-              </Link>
+              <button onClick={() => handleDeleteTeam(team.id)} className="btn-secondary btn-icon" style={{borderColor: 'var(--mlb-red)', color: 'var(--mlb-red)'}}>
+                <i className="fa-solid fa-trash"></i>
+                <span className="btn-text">Delete</span>
+              </button>
             </div>
           </div>
           
@@ -151,8 +150,9 @@ export default function TeamManager({ session, profile }) {
               {loadingPlaylists ? (
                 <p>Loading playlists...</p>
               ) : (
-                <select id={`playlist-select-${team.id}`} value={team.warmup_playlist_id || ''} onChange={(e) => handlePlaylistChange(team.id, e.target.value)} style={{marginTop: '5px', maxWidth: '100%'}}>
-                  {/* ... options ... */}
+                <select id={`playlist-select-${team.id}`} value={team.warmup_playlist_id || ''} onChange={(e) => handlePlaylistChange(team.id, e.target.value)} style={{marginTop: '5px', width: '100%'}}>
+                  <option value="">-- Select a Playlist --</option>
+                  {playlists.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
                 </select>
               )}
             </div>
@@ -182,7 +182,7 @@ export default function TeamManager({ session, profile }) {
             <strong className="card-section-title">Share Link</strong>
             <div className="share-actions">
               <button onClick={() => handleCopyUrl(`${window.location.origin}/public/${team.public_share_id}`, team.id)} className="btn-secondary">Copy URL</button>
-  <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`, team.id)} className="btn-secondary">Show QR Code</button>
+              <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`, team.id)} className="btn-secondary">Show QR Code</button>
             </div>
           </div>
         </div>
@@ -191,10 +191,9 @@ export default function TeamManager({ session, profile }) {
       {canCreateTeam && (
         <div className="card">
           <h3>Create New Team</h3>
-          {/* --- THIS IS THE FIX for the form layout --- */}
-          <form onSubmit={handleCreateTeam} className="responsive-form">
-            <input type="text" placeholder="Enter new team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required style={{marginBottom: 0, flexGrow: 1}} />
-            <button type="submit" className="btn-primary" style={{width: 'auto', flexShrink: 0}}>Create Team</button>
+          <form onSubmit={handleCreateTeam} className="form-horizontal">
+            <input type="text" placeholder="Enter new team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required />
+            <button type="submit" className="btn-primary">Create Team</button>
           </form>
         </div>
       )}

@@ -153,3 +153,24 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
     flex-direction: row; /* Side-by-side on larger screens */
   }
 }
+
+/* --- NEW: A more flexible form style for horizontal layouts --- */
+.form-horizontal {
+  display: flex;
+  flex-direction: column; /* Mobile first */
+  gap: 10px;
+}
+@media (min-width: 600px) {
+  .form-horizontal {
+    flex-direction: row;
+    align-items: center;
+  }
+  .form-horizontal input {
+    flex-grow: 1; /* Allow input to take up available space */
+    margin-bottom: 0;
+  }
+  .form-horizontal button {
+    width: auto; /* Allow button to shrink to its content size */
+    flex-shrink: 0;
+  }
+}

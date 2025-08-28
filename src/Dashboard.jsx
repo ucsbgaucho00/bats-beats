@@ -10,10 +10,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
   
-  const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID'; // Ensure this is correct
+  const UPGRADE_PRICE_ID = 'price_1RlcrbIjwUvbU06TUPGRADEPRICEID';
 
   useEffect(() => {
     const getProfile = async () => {
+      if (!session) return;
       try {
         setLoading(true)
         const { user } = session
@@ -46,7 +47,6 @@ export default function Dashboard() {
     }
   }
 
-  // --- THIS IS THE MISSING FUNCTION ---
   const handleSpotifyConnect = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('spotify-auth', { method: 'GET' })
