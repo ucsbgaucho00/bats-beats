@@ -20,6 +20,7 @@ const initializePlayer = (accessToken) => {
       console.log('Warmup Player Ready with Device ID', ready_device_id);
       device_id = ready_device_id;
     });
+    spotifyPlayer.addListener('not_ready', () => { device_id = null; });
     spotifyPlayer.connect();
   }
 };
@@ -29,6 +30,7 @@ export default function WarmupPlayer() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [team, setTeam] = useState(null)
+  const [playlistName, setPlaylistName] = useState('');
   const [accessToken, setAccessToken] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isShuffle, setIsShuffle] = useState(true)
@@ -50,8 +52,17 @@ export default function WarmupPlayer() {
           body: { owner_user_id: teamData.user_id }
         })
         if (error) throw error
-        setAccessToken(data.new_access_token)
-        initializePlayer(data.new_access_token)
+        const token = data.new_access_token;
+        setAccessToken(token)
+        initializePlayer(token)
+
+        // Fetch playlist name from Spotify
+        const playlistResponse = await fetch(`https://api.spotify.com/v1/playlists/${teamData.warmup_playlist_id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const playlistData = await playlistResponse.json();
+        setPlaylistName(playlistData.name);
+
       } catch (err) {
         setError(err.message)
       } finally {
@@ -104,12 +115,10 @@ export default function WarmupPlayer() {
           'Authorization': `Bearer ${accessToken}`
         },
       });
-      setTimeout(() => {
-        handleShuffle(isShuffle);
-      }, 500);
+      setTimeout(() => handleShuffle(isShuffle), 500);
       setIsPlaying(true);
     }
-  }
+  };
 
   const handleShuffle = async (shuffleState) => {
     if (!accessToken) return;
@@ -118,7 +127,7 @@ export default function WarmupPlayer() {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
     setIsShuffle(shuffleState);
-  }
+  };
 
   const handleSkip = async () => {
     if (!accessToken) return;
@@ -127,27 +136,143 @@ export default function WarmupPlayer() {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
     setIsPlaying(true);
-  }
+  };
 
-  if (loading) return <div>Loading Warmup Player...</div>
-  if (error) return <div>Error: {error} <Link to="/dashboard">Go Back</Link></div>
+  if (loading) return <div className="page-content"><p>Loading Warmup Player...</p></div>
+  if (error) return <div className="page-content"><p>Error: {error} <Link to="/dashboard">Go Back</Link></p></div>
 
   return (
-    <div>
-      <Link to="/dashboard">{'<'} Back to Dashboard</Link>
-      <h1>{team.team_name}</h1>
-      <h2>Warmup Mix</h2>
-      <div className="player-controls" style={{ marginTop: '20px' }}>
-        <button onClick={() => handleShuffle(!isShuffle)} style={{ backgroundColor: isShuffle ? 'lightgreen' : 'white' }}>
-          Shuffle {isShuffle ? 'On' : 'Off'}
+    <div className="page-content">
+      <div style={{marginBottom: '20px'}}>
+        <Link to="/dashboard">
+          <button className="btn-secondary" style={{width: 'auto'}}>{'<'} Back to Dashboard</button>
+        </Link>
+      </div>
+      
+      <div className="warmup-controls">
+        <button onClick={() => handleShuffle(!isShuffle)} className={`skip-shuffle-btn ${isShuffle ? 'btn-primary' : 'btn-secondary'}`}>
+          <i className="fa-solid fa-shuffle"></i>
         </button>
-        <button onClick={handlePlayPause} style={{ margin: '0 15px', fontSize: '1.5em' }}>
-          {isPlaying ? 'Pause' : 'Play'}
+        <button onClick={handlePlayPause} className="play-pause-btn btn-primary">
+          {isPlaying ? <i className="fa-solid fa-pause"></i> : <i className="fa-solid fa-play"></i>}
         </button>
-        <button onClick={handleSkip}>
-          Skip Track
+        <button onClick={handleSkip} className="skip-shuffle-btn btn-secondary">
+          <i className="fa-solid fa-forward-step"></i>
         </button>
       </div>
+      {playlistName && <p className="playlist-name">{playlistName}</p>}
+    </div>
+  )
+}```
+
+### 2. Complete `PublicPlayer.jsx` Code
+
+This version implements the "player playing" visual state and the updated button logic.
+
+```javascript
+// src/PublicPlayer.jsx
+
+import { useState, useEffect } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { supabase } from './supabaseClient'
+import PlayButton from './PlayButton'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+
+const truncate = (text, length) => { /* ... (unchanged) ... */ };
+
+export default function PublicPlayer() {
+  const { shareId } = useParams()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [teamData, setTeamData] = useState(null)
+  const [freshToken, setFreshToken] = useState(null)
+  const [isReordering, setIsReordering] = useState(false)
+  const [activePlayers, setActivePlayers] = useState([])
+  const [inactivePlayers, setInactivePlayers] = useState([])
+  const [currentlyPlayingUri, setCurrentlyPlayingUri] = useState(null);
+
+  useEffect(() => {
+    const fetchAllData = async () => { /* ... (unchanged) ... */ };
+    fetchAllData();
+  }, [shareId]);
+
+  const handleOnDragEnd = (result) => { /* ... (unchanged) ... */ }
+  const handleSaveOrder = async () => { /* ... (unchanged) ... */ }
+
+  if (loading) return <div className="page-content"><p>Loading player...</p></div>;
+  if (error || !teamData) return <div className="page-content"><p>Error: {error || 'Could not load team data.'}</p></div>;
+
+  const showInactiveSection = isReordering || inactivePlayers.length > 0;
+
+  return (
+    <div className="page-content">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 style={{margin: 0}}>{teamData.teamName}</h1>
+        <div>
+          {teamData.showWarmupButton && (
+            <Link to={`/public/${shareId}/warmup`} style={{marginRight: '10px'}}>
+              <button className="btn-primary">▶ Play Warmup</button>
+            </Link>
+          )}
+          <button onClick={() => setIsReordering(!isReordering)} className={isReordering ? 'btn-primary' : 'btn-secondary'}>
+            {isReordering ? 'Save Lineup' : 'Edit Lineup'}
+          </button>
+          {isReordering && (
+            <button onClick={() => { setIsReordering(false); /* Add logic to revert changes if needed */ }} className="btn-secondary" style={{marginLeft: '10px'}}>
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+
+      <DragDropContext onDragEnd={handleOnDragEnd}>
+        <Droppable droppableId="activePlayers">
+          {(provided) => (
+            <div {...provided.droppableProps} ref={provided.innerRef}>
+              <h3>Active Roster</h3>
+              <table className="public-player-table">
+                <thead>
+                  <tr>
+                    {isReordering && <th style={{width: '40px'}}></th>}
+                    <th className="col-number">#</th>
+                    <th className="col-player">Player</th>
+                    <th className="col-song">Song</th>
+                    <th className="col-play">Play</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activePlayers.map((player, index) => (
+                    <Draggable key={player.id} draggableId={String(player.id)} index={index} isDragDisabled={!isReordering}>
+                      {(provided) => (
+                        <tr 
+                          ref={provided.innerRef} 
+                          {...provided.draggableProps} 
+                          className={currentlyPlayingUri === player.song_uri ? 'player-row playing' : 'player-row'}
+                        >
+                          {isReordering && <td {...provided.dragHandleProps} className="draggable-handle">☰</td>}
+                          <td>{player.player_number}</td>
+                          <td>{`${player.first_name} ${player.last_name ? player.last_name.charAt(0) + '.' : ''}`}</td>
+                          <td><strong>{truncate(player.song_title, 15)}</strong></td>
+                          <td>
+                            <PlayButton 
+                              songUri={player.song_uri} 
+                              startTimeMs={player.song_start_time}
+                              accessTokenOverride={freshToken}
+                              onPlayStateChange={(isPlaying) => setCurrentlyPlayingUri(isPlaying ? player.song_uri : null)}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Droppable>
+        {/* ... (Inactive players section is unchanged) ... */}
+      </DragDropContext>
     </div>
   )
 }
