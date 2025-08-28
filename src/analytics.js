@@ -1,4 +1,3 @@
-javascript
 // src/analytics.js
 import ReactGA from 'react-ga4';
 
