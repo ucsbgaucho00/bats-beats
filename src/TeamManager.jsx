@@ -90,7 +90,7 @@ export default function TeamManager({ session, profile }) {
     }
   };
 
-  onst handleCopyUrl = (url, teamId) => { // <-- Add teamId
+  const handleCopyUrl = (url, teamId) => { // <-- Add teamId
     navigator.clipboard.writeText(url).then(async () => {
       alert('Share link copied to clipboard!');
       // --- NEW: Track this event ---
