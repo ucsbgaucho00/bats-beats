@@ -1,6 +1,6 @@
 // src/LandingPage.jsx
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 
@@ -13,10 +13,36 @@ const validatePassword = (password) => {
   return null;
 };
 
+const styles = {
+  pricingTable: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px',
+    margin: '30px 0',
+  },
+  plan: {
+    border: '2px solid var(--border-color)',
+    borderRadius: '8px',
+    padding: '30px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease-in-out',
+    flex: '1',
+  },
+  planPrice: {
+    fontSize: '2.2em',
+    margin: '10px 0',
+    fontWeight: 'bold',
+  }
+};
+
+if (window.innerWidth >= 768) {
+  styles.pricingTable.flexDirection = 'row';
+}
+
 export default function LandingPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start in a loading state
   const [isSigningIn, setIsSigningIn] = useState(location.state?.showSignIn || false);
 
   const [firstName, setFirstName] = useState('')
@@ -28,6 +54,28 @@ export default function LandingPage() {
   
   const prices = { single: 5.99, home_run: 9.99 };
   const totalPrice = selectedPlan ? prices[selectedPlan] : 0;
+
+  // --- THIS IS THE NEW useEffect HOOK ---
+  // It goes here, after state declarations and before handlers.
+  useEffect(() => {
+    const checkSessionAndRedirect = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('license')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile?.license) {
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+      }
+      setLoading(false);
+    };
+    checkSessionAndRedirect();
+  }, [navigate]);
 
   const handleSelectPlan = (plan) => {
     setSelectedPlan(plan);
@@ -47,13 +95,11 @@ export default function LandingPage() {
     if (passwordError) {
       return alert(passwordError);
     }
-    setLoading(true);
 
+    setLoading(true);
     try {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { first_name: firstName, last_name: lastName } }
+        email, password, options: { data: { first_name: firstName, last_name: lastName } }
       });
       if (signUpError) throw signUpError;
       if (!signUpData.user) throw new Error("Sign-up did not return a user.");
@@ -85,9 +131,17 @@ export default function LandingPage() {
       navigate('/dashboard');
     } catch (error) {
       alert(error.error_description || error.message);
-    } finally {
       setLoading(false);
     }
+  }
+
+  // --- THIS IS THE NEW LOADING CHECK ---
+  if (loading) {
+    return (
+      <div className="auth-container">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (

@@ -47,11 +47,7 @@ const ProtectedRoutes = () => {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (session && profile?.license && location.pathname === '/') {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  if (loading) return <div>Loading session...</div>;
+    if (loading) return <div>Loading session...</div>;
   if (!session) return <Navigate to="/" state={{ from: location }} replace />;
   if (!profile?.license) return <Navigate to="/" replace />;
   
