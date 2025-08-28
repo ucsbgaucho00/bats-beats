@@ -55,7 +55,7 @@ const ProtectedRoutes = () => {
   if (!session) return <Navigate to="/" state={{ from: location }} replace />;
   if (!profile?.license) return <Navigate to="/" replace />;
   
-  return <Outlet context={{ session }} />;
+  return <Outlet context={{ session, profile }} />;
 };
 
 function App() {

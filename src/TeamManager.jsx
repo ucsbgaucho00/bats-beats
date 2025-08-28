@@ -90,17 +90,29 @@ export default function TeamManager({ session, profile }) {
     }
   };
 
-  const handleCopyUrl = (url) => {
-    navigator.clipboard.writeText(url).then(() => {
+  onst handleCopyUrl = (url, teamId) => { // <-- Add teamId
+    navigator.clipboard.writeText(url).then(async () => {
       alert('Share link copied to clipboard!');
+      // --- NEW: Track this event ---
+      await supabase.from('events').insert({
+        event_name: 'copy_share_url',
+        user_id: session.user.id,
+        team_id: teamId
+      });
     }).catch(err => {
       console.error('Failed to copy text: ', err);
     });
   };
 
-  const handleShowQrCode = (url) => {
+  const handleShowQrCode = async (url, teamId) => { // <-- Add teamId
     setQrCodeUrl(url);
     setShowQrModal(true);
+    // --- NEW: Track this event ---
+    await supabase.from('events').insert({
+      event_name: 'generate_qr_code',
+      user_id: session.user.id,
+      team_id: teamId
+    });
   };
 
   const canCreateTeam = profile.license === 'Home Run' || (profile.license === 'Single' && teams.length === 0)
@@ -170,8 +182,8 @@ export default function TeamManager({ session, profile }) {
           <div className="card-section">
             <strong className="card-section-title">Share Link</strong>
             <div className="share-actions">
-              <button onClick={() => handleCopyUrl(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">Copy URL</button>
-              <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">Show QR Code</button>
+              <button onClick={() => handleCopyUrl(`${window.location.origin}/public/${team.public_share_id}`, team.id)} className="btn-secondary">Copy URL</button>
+  <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`, team.id)} className="btn-secondary">Show QR Code</button>
             </div>
           </div>
         </div>
