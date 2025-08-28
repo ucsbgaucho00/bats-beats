@@ -49,7 +49,21 @@ export default function Dashboard() {
 
   const handleSpotifyConnect = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('spotify-auth', { method: 'GET' })
+      // --- THIS IS THE CRITICAL FIX ---
+      // 1. Manually get the current session to ensure we have the access token.
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!currentSession) throw new Error("User is not logged in.");
+
+      // 2. Call the function with the token set explicitly in the headers.
+      const { data, error } = await supabase.functions.invoke('spotify-auth', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        }
+      })
+      // --- END OF FIX ---
+      
       if (error) throw new Error('Failed to get Spotify auth URL: ' + error.message)
       window.location.href = data.url
     } catch (error) {
