@@ -18,40 +18,41 @@ body {
 }
 
 /* --- Main Layout & Header --- */
-.app-header {
-  background-color: var(--mlb-blue);
-  color: white;
-  padding: 10px 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.app-header .logo-link img { max-width: 160px; vertical-align: middle; }
-.hamburger-menu { font-size: 1.5em; background: none; border: none; color: white; cursor: pointer; padding: 0 10px; width: auto; }
-
 .page-container {
   max-width: 1160px;
   margin: 0 auto;
   padding: 20px 15px;
 }
-.page-content { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.app-header {
+  background-color: var(--mlb-blue);
+  color: white;
+  padding: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+.app-header .logo-link img { max-width: 160px; vertical-align: middle; }
+.hamburger-menu { font-size: 1.5em; background: none; border: none; color: white; cursor: pointer; padding: 0 10px; width: auto; }
 
-/* --- Auth Forms (Sign In / Sign Up) --- */
+.page-content { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+@media (min-width: 768px) { .page-content { padding: 30px; } }
+
+/* --- Auth Forms (MLB Style) --- */
 .auth-container {
   max-width: 480px;
   margin: 20px auto;
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 @media (min-width: 500px) { .auth-container { padding: 40px; } }
 .auth-header { text-align: left; margin-bottom: 20px; }
-.auth-header img { max-width: 60px; }
-.form-container h2 { font-size: 1.8em; margin: 0 0 20px 0; color: var(--mlb-blue); text-align: center; }
-.form-container .input-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
-.form-container input { padding: 15px; font-size: 1em; width: 100%; box-sizing: border-box; }
-.form-actions { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; }
+.auth-header img { max-width: 50px; }
+.form-container h2 { font-size: 1.8em; margin: 0 0 25px 0; color: var(--mlb-blue); text-align: center; }
+.form-container .input-group { display: flex; flex-direction: column; gap: 18px; margin-bottom: 25px; }
+.form-container input { padding: 15px; font-size: 1em; width: 100%; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 5px; }
+.form-actions { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 25px; }
 .form-actions .forgot-password-link { margin-top: 15px; font-size: 0.9em; color: var(--mlb-blue); text-decoration: none; }
 
 /* --- Button Variants --- */
@@ -61,7 +62,8 @@ button { width: 100%; border: 2px solid var(--mlb-blue); padding: 12px 15px; bor
 .btn-secondary { background-color: white; color: var(--mlb-blue); }
 .btn-secondary:hover { background-color: var(--mlb-red); border-color: var(--mlb-red); color: white; }
 .btn-icon { width: auto; padding: 8px 12px; font-size: 1.2em; }
-.btn-icon-red { background: white; color: var(--mlb-red); border-color: var(--mlb-red); }
+.btn-icon .btn-text { display: none; } /* Hide text on mobile */
+@media (min-width: 768px) { .btn-icon .btn-text { display: inline; margin-left: 8px; } } /* Show text on desktop */
 
 /* --- Pricing Table --- */
 .pricing-table { display: flex; flex-direction: column; gap: 15px; margin: 30px 0; }
@@ -76,30 +78,13 @@ button { width: 100%; border: 2px solid var(--mlb-blue); padding: 12px 15px; bor
 .pricing-features li { padding-left: 25px; position: relative; margin-bottom: 8px; }
 .pricing-features li::before { content: '✔'; color: var(--mlb-red); position: absolute; left: 0; font-weight: bold; }
 
-/* --- Team Manager & Player Manager --- */
-.team-card, .player-card { background-color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.card-title { font-size: 1.4em; font-weight: bold; color: var(--mlb-blue); text-decoration: none; }
-.card-actions button { width: auto; margin-left: 10px; font-size: 0.9em; padding: 8px 12px; }
-.share-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-.share-actions button { width: auto; flex-grow: 1; }
-
 /* --- Animated Toggle Switch --- */
-.toggle-group { display: flex; flex-direction: column; gap: 10px; }
+.toggle-group { display: flex; flex-direction: column; gap: 15px; } /* Stacked on mobile */
+@media (min-width: 768px) { .toggle-group { flex-direction: row; gap: 30px; } } /* Side-by-side on desktop */
 .toggle-label { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-.toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+.toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; flex-shrink: 0; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; }
 .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
 .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
 input:checked + .toggle-slider { background-color: var(--mlb-blue); }
 input:checked + .toggle-slider:before { transform: translateX(22px); }
-
-/* --- Warmup Player --- */
-.warmup-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 30px 0; }
-.warmup-controls .play-pause-btn { width: 50%; max-width: 150px; font-size: 2em; padding: 20px; }
-.warmup-controls .skip-shuffle-btn { width: 20%; max-width: 80px; height: 80px; border-radius: 50%; font-size: 1.5em; }
-.playlist-name { text-align: center; text-transform: uppercase; font-size: 0.9em; letter-spacing: 1px; }
-
-/* --- Public Player --- */
-.player-row.playing { font-weight: bold; color: var(--mlb-red); }
-.draggable-handle { font-size: 1.5em; cursor: grab; }

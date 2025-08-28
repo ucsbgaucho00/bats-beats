@@ -4,7 +4,43 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 
-const validatePassword = (password) => { /* ... (unchanged) ... */ };
+const validatePassword = (password) => {
+  if (password.length < 12) return "Password must be at least 12 characters long.";
+  if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter.";
+  if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter.";
+  if (!/[0-9]/.test(password)) return "Password must contain at least one number.";
+  if (/[^a-zA-Z0-9]/.test(password)) return "Password must not contain any special characters.";
+  return null;
+};
+
+// Pricing table styles are kept here as they are specific to this component
+const styles = {
+  pricingTable: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px',
+    margin: '30px 0',
+  },
+  plan: {
+    border: '2px solid var(--border-color)',
+    borderRadius: '8px',
+    padding: '30px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease-in-out',
+    flex: '1',
+  },
+  planPrice: {
+    fontSize: '2.2em',
+    margin: '10px 0',
+    fontWeight: 'bold',
+  }
+};
+
+// Media query style for desktop pricing table
+if (window.innerWidth >= 768) {
+  styles.pricingTable.flexDirection = 'row';
+}
+
 
 export default function LandingPage() {
   const location = useLocation();
@@ -22,28 +58,64 @@ export default function LandingPage() {
   const prices = { single: 5.99, home_run: 9.99 };
   const totalPrice = selectedPlan ? prices[selectedPlan] : 0;
 
-  const handleSelectPlan = (plan) => { setSelectedPlan(plan); }
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan);
+  }
 
   const handleContinueToPayment = async () => {
-    if (!firstName || !lastName || !email || !password) return alert('Please fill out all required fields.');
-    if (!selectedPlan) return alert('Please select a license plan.');
-    if (password !== confirmPassword) return alert("Passwords do not match.");
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+      return alert('Please fill out all required fields.');
+    }
+    if (!selectedPlan) {
+      return alert('Please select a license plan.');
+    }
+    if (password !== confirmPassword) {
+      return alert("Passwords do not match.");
+    }
     const passwordError = validatePassword(password);
-    if (passwordError) return alert(passwordError);
+    if (passwordError) {
+      return alert(passwordError);
+    }
+
     setLoading(true);
-    // ... (rest of the function is the same)
+    try {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { first_name: firstName, last_name: lastName } }
+      });
+      if (signUpError) throw signUpError;
+      if (!signUpData.user) throw new Error("Sign-up did not return a user.");
+
+      await supabase.auth.signInWithPassword({ email, password });
+      
+      const priceId = selectedPlan === 'single' ? 'price_1RlcrbIjwUvbU06TzNxDJYkJ' : 'price_1RlcroIjwUvbU06TJIpGIBlT';
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout-session', {
+        body: { priceId, couponCode: null }
+      });
+      if (checkoutError) throw checkoutError;
+      
+      window.location.href = checkoutData.url;
+
+    } catch (error) {
+      alert(error.error_description || error.message);
+      setLoading(false);
+    }
   }
   
   const handleSignIn = async () => {
-    if (!email || !password) return alert('Please enter your email and password.');
-    setLoading(true)
+    if (!email || !password) {
+      return alert('Please enter your email and password.');
+    }
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
-      navigate('/dashboard')
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      navigate('/dashboard');
     } catch (error) {
-      alert(error.error_description || error.message)
-      setLoading(false); // Ensure loading is false on error
+      alert(error.error_description || error.message);
+    } finally {
+      setLoading(false);
     }
   }
 
