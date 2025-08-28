@@ -107,3 +107,37 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
 /* --- Public Player --- */
 .player-row.playing { font-weight: bold; color: var(--mlb-red); }
 .draggable-handle { font-size: 1.5em; cursor: grab; padding-right: 15px; }
+
+/* --- Admin Dashboard --- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.kpi-card {
+  background: var(--light-gray);
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.kpi-card-title {
+  font-size: 0.9em;
+  color: #555;
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+}
+
+.kpi-card-value {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: var(--mlb-blue);
+  margin: 0;
+}
+
+.chart-container {
+  margin-top: 30px;
+  height: 400px; /* Give the chart a fixed height */
+}
