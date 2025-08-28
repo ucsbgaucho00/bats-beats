@@ -37,7 +37,7 @@ export default function Dashboard() {
   const handleSpotifyConnect = async () => { /* ... (unchanged) ... */ }
   const handleSpotifyDisconnect = async () => { /* ... (unchanged) ... */ }
 
-  return (
+   return (
     <div className="page-content">
       <h1>Dashboard</h1>
       
@@ -45,7 +45,7 @@ export default function Dashboard() {
         <p>Loading your profile...</p>
       ) : profile ? (
         <div>
-          <div className="team-card">
+          <div className="card">
             <h3>Spotify Connection</h3>
             {profile.spotify_access_token ? (
               <>
@@ -61,7 +61,7 @@ export default function Dashboard() {
           </div>
           
           {profile.license === 'Single' && (
-            <div className="team-card">
+            <div className="card">
               <h3>Upgrade Your License</h3>
               <button onClick={() => createCheckoutSession(UPGRADE_PRICE_ID)} disabled={loading} className="btn-primary" style={{width: 'auto'}}>
                 Upgrade to Home Run ($5.00)

@@ -116,10 +116,9 @@ export default function TeamManager({ session, profile }) {
       )}
 
       <h2>Manage Your Teams</h2>
-      {loading && <p>Loading teams...</p>}
       
       {teams.map(team => (
-        <div key={team.id} className="team-card">
+        <div key={team.id} className="card team-card">
           <div className="card-header">
             <h3 className="card-title">{team.team_name}</h3>
             <div className="card-actions">
@@ -127,38 +126,29 @@ export default function TeamManager({ session, profile }) {
                 <i className="fa-solid fa-pencil"></i>
                 <span className="btn-text">Edit</span>
               </button>
-              <button onClick={() => handleDeleteTeam(team.id)} className="btn-secondary btn-icon" style={{borderColor: 'var(--mlb-red)', color: 'var(--mlb-red)'}}>
-                <i className="fa-solid fa-trash"></i>
-                <span className="btn-text">Delete</span>
-              </button>
+              <Link to={`/public/${team.public_share_id}`} className="btn-primary btn-icon">
+                 <i className="fa-solid fa-play"></i>
+                 <span className="btn-text">Play</span>
+              </Link>
             </div>
           </div>
           
           {profile.license === 'Home Run' && (
-            <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #f0f0f0' }}>
-              <label htmlFor={`playlist-select-${team.id}`} style={{fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.8em'}}>Warmup Playlist</label>
+            <div className="card-section">
+              <label htmlFor={`playlist-select-${team.id}`} className="card-section-title">Warmup Playlist</label>
               {loadingPlaylists ? (
                 <p>Loading playlists...</p>
               ) : (
-                <select id={`playlist-select-${team.id}`} value={team.warmup_playlist_id || ''} onChange={(e) => handlePlaylistChange(team.id, e.target.value)} style={{marginTop: '5px', maxWidth: '100%'}}>
+                <select id={`playlist-select-${team.id}`} value={team.warmup_playlist_id || ''} onChange={(e) => handlePlaylistChange(team.id, e.target.value)} style={{marginTop: '5px'}}>
                   <option value="">-- Select a Playlist --</option>
-                  {playlists.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
+                  {playlists.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
                 </select>
-              )}
-              {team.warmup_playlist_id && (
-                <div style={{ marginTop: '10px' }}>
-                  <Link to={`/team/${team.id}/warmup`}>
-                    <button className="btn-primary" style={{width: 'auto'}}>Play Warmup Mix</button>
-                  </Link>
-                </div>
               )}
             </div>
           )}
           
-          <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #f0f0f0' }}>
-            <strong style={{textTransform: 'uppercase', fontSize: '0.8em'}}>Filter explicit songs</strong>
+          <div className="card-section">
+            <strong className="card-section-title">Filter explicit songs</strong>
             <div className="toggle-group" style={{marginTop: '10px'}}>
               <label className="toggle-label">
                 <span>Walk-up songs</span>
@@ -177,8 +167,8 @@ export default function TeamManager({ session, profile }) {
             </div>
           </div>
 
-          <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #f0f0f0' }}>
-            <strong style={{textTransform: 'uppercase', fontSize: '0.8em'}}>Share Link</strong>
+          <div className="card-section">
+            <strong className="card-section-title">Share Link</strong>
             <div className="share-actions">
               <button onClick={() => handleCopyUrl(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">Copy URL</button>
               <button onClick={() => handleShowQrCode(`${window.location.origin}/public/${team.public_share_id}`)} className="btn-secondary">Show QR Code</button>
@@ -188,7 +178,7 @@ export default function TeamManager({ session, profile }) {
       ))}
       
       {canCreateTeam && (
-        <div className="team-card">
+        <div className="card">
           <h3>Create New Team</h3>
           <form onSubmit={handleCreateTeam} style={{display: 'flex', gap: '10px'}}>
             <input type="text" placeholder="Enter new team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required style={{marginBottom: 0}} />
