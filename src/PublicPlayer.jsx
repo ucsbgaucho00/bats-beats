@@ -21,39 +21,37 @@ export default function PublicPlayer() {
   const [isReordering, setIsReordering] = useState(false)
   const [activePlayers, setActivePlayers] = useState([])
   const [inactivePlayers, setInactivePlayers] = useState([])
+  const [currentlyPlayingUri, setCurrentlyPlayingUri] = useState(null);
 
   useEffect(() => {
     const fetchAllData = async () => {
       if (!shareId) return;
       try {
         setLoading(true);
-        
-        // Step 1: Call our database function to get team details
         const { data: team, error: teamError } = await supabase
-          .rpc('get_public_team_details', { share_id_in: shareId })
+          .from('teams')
+          .select('id, team_name, user_id, warmup_playlist_id, profiles(license)')
+          .eq('public_share_id', shareId)
           .single();
         if (teamError) throw teamError;
         
         const initialData = {
             teamName: team.team_name,
-            teamId: team.team_id,
-            ownerUserId: team.owner_user_id,
-            showWarmupButton: team.owner_license === 'Home Run' && !!team.warmup_playlist_id,
+            teamId: team.id,
+            ownerUserId: team.user_id,
+            showWarmupButton: team.profiles?.license === 'Home Run' && !!team.warmup_playlist_id,
         }
         setTeamData(initialData);
 
-        // --- THIS IS THE CRITICAL FIX ---
-        // Step 2: Use the teamId from the RPC result to fetch all players
         const { data: allPlayers, error: playersError } = await supabase
           .from('players')
           .select('*')
-          .eq('team_id', initialData.teamId); // Use the correct teamId
+          .eq('team_id', initialData.teamId);
         if (playersError) throw playersError;
         
         setActivePlayers(allPlayers.filter(p => p.is_active).sort((a, b) => a.batting_order - b.batting_order));
         setInactivePlayers(allPlayers.filter(p => !p.is_active));
 
-        // Step 3: Refresh the Spotify token
         const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } });
         if (refreshError) throw refreshError;
         setFreshToken(tokenData.new_access_token);
@@ -91,6 +89,7 @@ export default function PublicPlayer() {
 
   const handleSaveOrder = async () => {
     try {
+      setLoading(true);
       const { error } = await supabase.functions.invoke('update-batting-order', {
         body: { activePlayers, inactivePlayers }
       })
@@ -99,40 +98,49 @@ export default function PublicPlayer() {
       setIsReordering(false)
     } catch (error) {
       alert('Error saving lineup: ' + error.message)
+    } finally {
+      setLoading(false);
     }
   }
 
-  if (loading) return <div>Loading player...</div>;
-  if (error || !teamData) return <div>Error: {error || 'Could not load team data.'}</div>;
+  if (loading) return <div className="page-content"><p>Loading player...</p></div>;
+  if (error || !teamData) return <div className="page-content"><p>Error: {error || 'Could not load team data.'}</p></div>;
 
   const droppableStyle = (isDraggingOver) => ({
     border: isReordering ? (isDraggingOver ? '2px dashed lightblue' : '2px dashed #ccc') : 'none',
-    borderRadius: '5px',
+    borderRadius: '8px',
     padding: isReordering ? '10px' : '0',
     margin: '20px 0',
-    transition: 'border 0.2s ease-in-out, padding 0.2s ease-in-out',
+    transition: 'all 0.2s ease-in-out',
   });
 
   const showInactiveSection = isReordering || inactivePlayers.length > 0;
 
   return (
-    <div>
-      <h1>{teamData.teamName}</h1>
-      <p>Walk-up songs</p>
-      
-      {teamData.showWarmupButton && (
-        <div style={{ margin: '20px 0' }}>
-          <Link to={`/public/${shareId}/warmup`}>
-            <button style={{fontSize: '1.1em', padding: '10px'}}>▶ Play Warmup Mix</button>
-          </Link>
+    <div className="page-content">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <h1 style={{margin: 0}}>{teamData.teamName}</h1>
+        <div style={{display: 'flex', gap: '10px'}}>
+          {teamData.showWarmupButton && (
+            <Link to={`/public/${shareId}/warmup`}>
+              <button className="btn-primary">▶ Play Warmup</button>
+            </Link>
+          )}
+          <button onClick={() => {
+            if (isReordering) {
+              handleSaveOrder();
+            } else {
+              setIsReordering(true);
+            }
+          }} className={isReordering ? 'btn-primary' : 'btn-secondary'} style={isReordering ? {backgroundColor: 'var(--mlb-red)', borderColor: 'var(--mlb-red)'} : {}}>
+            {isReordering ? 'Save Changes' : 'Edit Lineup'}
+          </button>
+          {isReordering && (
+            <button onClick={() => setIsReordering(false)} className="btn-secondary">
+              Cancel
+            </button>
+          )}
         </div>
-      )}
-
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => setIsReordering(!isReordering)}>{isReordering ? 'Cancel Editing' : 'Edit Lineup'}</button>
-        {isReordering && (
-          <button onClick={handleSaveOrder} style={{ marginLeft: '10px', backgroundColor: 'lightgreen' }}>Save Changes</button>
-        )}
       </div>
 
       <DragDropContext onDragEnd={handleOnDragEnd}>
@@ -143,7 +151,7 @@ export default function PublicPlayer() {
               <table className="public-player-table">
                 <thead>
                   <tr>
-                    {isReordering && <th style={{width: '20px'}}></th>}
+                    {isReordering && <th style={{width: '40px'}}></th>}
                     <th className="col-number">#</th>
                     <th className="col-player">Player</th>
                     <th className="col-song">Song</th>
@@ -154,15 +162,22 @@ export default function PublicPlayer() {
                   {activePlayers.map((player, index) => (
                     <Draggable key={player.id} draggableId={String(player.id)} index={index} isDragDisabled={!isReordering}>
                       {(provided) => (
-                        <tr ref={provided.innerRef} {...provided.draggableProps} style={provided.draggableProps.style}>
-                          {isReordering && <td {...provided.dragHandleProps}><span>☰</span></td>}
-                          <td className="col-number">{player.player_number}</td>
-                          <td className="col-player">{`${player.first_name} ${player.last_name ? player.last_name.charAt(0) + '.' : ''}`}</td>
-                          <td className="col-song">
-                            <strong>{truncate(player.song_title, 15)}</strong>
-                          </td>
-                          <td className="col-play">
-                            <PlayButton songUri={player.song_uri} startTimeMs={player.song_start_time} accessTokenOverride={freshToken} />
+                        <tr 
+                          ref={provided.innerRef} 
+                          {...provided.draggableProps} 
+                          className={currentlyPlayingUri === player.song_uri ? 'player-row playing' : 'player-row'}
+                        >
+                          {isReordering && <td {...provided.dragHandleProps} className="draggable-handle">☰</td>}
+                          <td>{player.player_number}</td>
+                          <td>{`${player.first_name} ${player.last_name ? player.last_name.charAt(0) + '.' : ''}`}</td>
+                          <td><strong>{truncate(player.song_title, 15)}</strong></td>
+                          <td>
+                            <PlayButton 
+                              songUri={player.song_uri} 
+                              startTimeMs={player.song_start_time}
+                              accessTokenOverride={freshToken}
+                              onPlayStateChange={(isPlaying) => setCurrentlyPlayingUri(isPlaying ? player.song_uri : null)}
+                            />
                           </td>
                         </tr>
                       )}

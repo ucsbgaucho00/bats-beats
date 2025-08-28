@@ -20,7 +20,7 @@ const initializePlayer = (accessToken) => {
       console.log('Warmup Player Ready with Device ID', ready_device_id);
       device_id = ready_device_id;
     });
-    spotifyPlayer.addListener('not_ready', () => { device_id = null; });
+    // Add other listeners as needed
     spotifyPlayer.connect();
   }
 };
@@ -39,6 +39,7 @@ export default function WarmupPlayer() {
   useEffect(() => {
     const getTeamDataAndToken = async () => {
       try {
+        setLoading(true);
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
           .select('team_name, warmup_playlist_id, user_id')
@@ -56,10 +57,10 @@ export default function WarmupPlayer() {
         setAccessToken(token)
         initializePlayer(token)
 
-        // Fetch playlist name from Spotify
         const playlistResponse = await fetch(`https://api.spotify.com/v1/playlists/${teamData.warmup_playlist_id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (!playlistResponse.ok) throw new Error("Could not fetch playlist details.");
         const playlistData = await playlistResponse.json();
         setPlaylistName(playlistData.name);
 
@@ -161,118 +162,6 @@ export default function WarmupPlayer() {
         </button>
       </div>
       {playlistName && <p className="playlist-name">{playlistName}</p>}
-    </div>
-  )
-}```
-
-### 2. Complete `PublicPlayer.jsx` Code
-
-This version implements the "player playing" visual state and the updated button logic.
-
-```javascript
-// src/PublicPlayer.jsx
-
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { supabase } from './supabaseClient'
-import PlayButton from './PlayButton'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-
-const truncate = (text, length) => { /* ... (unchanged) ... */ };
-
-export default function PublicPlayer() {
-  const { shareId } = useParams()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [teamData, setTeamData] = useState(null)
-  const [freshToken, setFreshToken] = useState(null)
-  const [isReordering, setIsReordering] = useState(false)
-  const [activePlayers, setActivePlayers] = useState([])
-  const [inactivePlayers, setInactivePlayers] = useState([])
-  const [currentlyPlayingUri, setCurrentlyPlayingUri] = useState(null);
-
-  useEffect(() => {
-    const fetchAllData = async () => { /* ... (unchanged) ... */ };
-    fetchAllData();
-  }, [shareId]);
-
-  const handleOnDragEnd = (result) => { /* ... (unchanged) ... */ }
-  const handleSaveOrder = async () => { /* ... (unchanged) ... */ }
-
-  if (loading) return <div className="page-content"><p>Loading player...</p></div>;
-  if (error || !teamData) return <div className="page-content"><p>Error: {error || 'Could not load team data.'}</p></div>;
-
-  const showInactiveSection = isReordering || inactivePlayers.length > 0;
-
-  return (
-    <div className="page-content">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{margin: 0}}>{teamData.teamName}</h1>
-        <div>
-          {teamData.showWarmupButton && (
-            <Link to={`/public/${shareId}/warmup`} style={{marginRight: '10px'}}>
-              <button className="btn-primary">▶ Play Warmup</button>
-            </Link>
-          )}
-          <button onClick={() => setIsReordering(!isReordering)} className={isReordering ? 'btn-primary' : 'btn-secondary'}>
-            {isReordering ? 'Save Lineup' : 'Edit Lineup'}
-          </button>
-          {isReordering && (
-            <button onClick={() => { setIsReordering(false); /* Add logic to revert changes if needed */ }} className="btn-secondary" style={{marginLeft: '10px'}}>
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
-
-      <DragDropContext onDragEnd={handleOnDragEnd}>
-        <Droppable droppableId="activePlayers">
-          {(provided) => (
-            <div {...provided.droppableProps} ref={provided.innerRef}>
-              <h3>Active Roster</h3>
-              <table className="public-player-table">
-                <thead>
-                  <tr>
-                    {isReordering && <th style={{width: '40px'}}></th>}
-                    <th className="col-number">#</th>
-                    <th className="col-player">Player</th>
-                    <th className="col-song">Song</th>
-                    <th className="col-play">Play</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activePlayers.map((player, index) => (
-                    <Draggable key={player.id} draggableId={String(player.id)} index={index} isDragDisabled={!isReordering}>
-                      {(provided) => (
-                        <tr 
-                          ref={provided.innerRef} 
-                          {...provided.draggableProps} 
-                          className={currentlyPlayingUri === player.song_uri ? 'player-row playing' : 'player-row'}
-                        >
-                          {isReordering && <td {...provided.dragHandleProps} className="draggable-handle">☰</td>}
-                          <td>{player.player_number}</td>
-                          <td>{`${player.first_name} ${player.last_name ? player.last_name.charAt(0) + '.' : ''}`}</td>
-                          <td><strong>{truncate(player.song_title, 15)}</strong></td>
-                          <td>
-                            <PlayButton 
-                              songUri={player.song_uri} 
-                              startTimeMs={player.song_start_time}
-                              accessTokenOverride={freshToken}
-                              onPlayStateChange={(isPlaying) => setCurrentlyPlayingUri(isPlaying ? player.song_uri : null)}
-                            />
-                          </td>
-                        </tr>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Droppable>
-        {/* ... (Inactive players section is unchanged) ... */}
-      </DragDropContext>
     </div>
   )
 }
