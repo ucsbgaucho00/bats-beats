@@ -154,10 +154,27 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
   }
 }
 
-/* --- NEW: A more flexible form style for horizontal layouts --- */
+/* --- Global Form Element Styling --- */
+/* This ensures ALL inputs and selects look the same */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 15px; /* More padding inside fields */
+  margin: 0; /* Remove default margins */
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  box-sizing: border-box; /* Crucial for consistent sizing */
+  font-size: 1em;
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- NEW: A dedicated class for horizontal forms like "Create Team" --- */
 .form-horizontal {
   display: flex;
-  flex-direction: column; /* Mobile first */
+  flex-direction: column; /* Stacks on mobile */
   gap: 10px;
 }
 @media (min-width: 600px) {
@@ -166,11 +183,10 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
     align-items: center;
   }
   .form-horizontal input {
-    flex-grow: 1; /* Allow input to take up available space */
-    margin-bottom: 0;
+    flex-grow: 1; /* Allows input to take up space */
   }
   .form-horizontal button {
-    width: auto; /* Allow button to shrink to its content size */
+    width: auto; /* Button shrinks to fit content */
     flex-shrink: 0;
   }
 }
