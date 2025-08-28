@@ -13,35 +13,6 @@ const validatePassword = (password) => {
   return null;
 };
 
-// Pricing table styles are kept here as they are specific to this component
-const styles = {
-  pricingTable: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px',
-    margin: '30px 0',
-  },
-  plan: {
-    border: '2px solid var(--border-color)',
-    borderRadius: '8px',
-    padding: '30px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease-in-out',
-    flex: '1',
-  },
-  planPrice: {
-    fontSize: '2.2em',
-    margin: '10px 0',
-    fontWeight: 'bold',
-  }
-};
-
-// Media query style for desktop pricing table
-if (window.innerWidth >= 768) {
-  styles.pricingTable.flexDirection = 'row';
-}
-
-
 export default function LandingPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -76,8 +47,8 @@ export default function LandingPage() {
     if (passwordError) {
       return alert(passwordError);
     }
-
     setLoading(true);
+
     try {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
