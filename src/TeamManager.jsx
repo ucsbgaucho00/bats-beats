@@ -27,7 +27,7 @@ export default function TeamManager({ session, profile }) {
 
         if (profile.license === 'Home Run') {
           setLoadingPlaylists(true)
-          const { data: playlistsData, error: playlistsError } = await supabase.functions.invoke('get-spotify-playlists-with-refresh', { method: 'GET' })
+          const { data: playlistsData, error: playlistsError } = await supabase.functions.invoke('get-playlists-with-refresh', { method: 'GET' })
           if (playlistsError) throw playlistsError
           setPlaylists(playlistsData || [])
           setLoadingPlaylists(false)
