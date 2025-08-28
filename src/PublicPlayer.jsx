@@ -106,21 +106,13 @@ export default function PublicPlayer() {
   if (loading) return <div className="page-content"><p>Loading player...</p></div>;
   if (error || !teamData) return <div className="page-content"><p>Error: {error || 'Could not load team data.'}</p></div>;
 
-  const droppableStyle = (isDraggingOver) => ({
-    border: isReordering ? (isDraggingOver ? '2px dashed lightblue' : '2px dashed #ccc') : 'none',
-    borderRadius: '8px',
-    padding: isReordering ? '10px' : '0',
-    margin: '20px 0',
-    transition: 'all 0.2s ease-in-out',
-  });
-
   const showInactiveSection = isReordering || inactivePlayers.length > 0;
 
   return (
     <div className="page-content">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-        <h1 style={{margin: 0}}>{teamData.teamName}</h1>
-        <div style={{display: 'flex', gap: '10px'}}>
+      <div className="card-header">
+        <h1 className="card-title">{teamData.teamName}</h1>
+        <div className="card-actions">
           {teamData.showWarmupButton && (
             <Link to={`/public/${shareId}/warmup`}>
               <button className="btn-primary">▶ Play Warmup</button>
@@ -144,21 +136,21 @@ export default function PublicPlayer() {
       </div>
 
       <DragDropContext onDragEnd={handleOnDragEnd}>
-        <Droppable droppableId="activePlayers">
-          {(provided, snapshot) => (
-            <div {...provided.droppableProps} ref={provided.innerRef} style={droppableStyle(snapshot.isDraggingOver)}>
-              <h3>Active Roster</h3>
-              <table className="public-player-table">
-                <thead>
-                  <tr>
-                    {isReordering && <th style={{width: '40px'}}></th>}
-                    <th className="col-number">#</th>
-                    <th className="col-player">Player</th>
-                    <th className="col-song">Song</th>
-                    <th className="col-play">Play</th>
-                  </tr>
-                </thead>
-                <tbody>
+        <div className="card" style={{marginTop: '20px'}}>
+          <h3>Active Roster</h3>
+          <table className="public-player-table">
+            <thead>
+              <tr>
+                {isReordering && <th style={{width: '40px'}}></th>}
+                <th className="col-number">#</th>
+                <th className="col-player">Player</th>
+                <th className="col-song">Song</th>
+                <th className="col-play">Play</th>
+              </tr>
+            </thead>
+            <Droppable droppableId="activePlayers">
+              {(provided) => (
+                <tbody {...provided.droppableProps} ref={provided.innerRef}>
                   {activePlayers.map((player, index) => (
                     <Draggable key={player.id} draggableId={String(player.id)} index={index} isDragDisabled={!isReordering}>
                       {(provided) => (
@@ -185,46 +177,31 @@ export default function PublicPlayer() {
                   ))}
                   {provided.placeholder}
                 </tbody>
-              </table>
-            </div>
-          )}
-        </Droppable>
+              )}
+            </Droppable>
+          </table>
+        </div>
 
         {showInactiveSection && (
-          <Droppable droppableId="inactivePlayers">
-            {(provided, snapshot) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} style={droppableStyle(snapshot.isDraggingOver)}>
-                <h3>Inactive Players</h3>
-                {isReordering ? (
-                  <div style={{ minHeight: '100px', display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '10px' }}>
-                    {inactivePlayers.map((player, index) => (
-                      <Draggable key={player.id} draggableId={String(player.id)} index={index}>
-                        {(provided) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={{...provided.draggableProps.style, padding: '8px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#e0e0e0'}}>
-                            {player.first_name} {player.last_name}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                ) : (
-                  <table className="public-player-table">
-                    <tbody>
-                      {inactivePlayers.map(player => (
-                        <tr key={player.id} style={{ opacity: 0.5 }}>
-                          <td className="col-number">{player.player_number}</td>
-                          <td className="col-player">{`${player.first_name} ${player.last_name ? player.last_name.charAt(0) + '.' : ''}`}</td>
-                          <td className="col-song"><strong>{truncate(player.song_title, 15)}</strong></td>
-                          <td className="col-play"><button className="play-pause-btn" disabled>▶</button></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )}
-          </Droppable>
+          <div className="card">
+            <h3>Inactive Players</h3>
+            <Droppable droppableId="inactivePlayers">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} style={{minHeight: '100px', padding: '10px'}}>
+                  {inactivePlayers.map((player, index) => (
+                    <Draggable key={player.id} draggableId={String(player.id)} index={index} isDragDisabled={!isReordering}>
+                      {(provided) => (
+                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={{padding: '8px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#f0f0f0', marginBottom: '8px'}}>
+                          {player.first_name} {player.last_name}
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
         )}
       </DragDropContext>
     </div>
