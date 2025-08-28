@@ -35,7 +35,28 @@ export default function Dashboard() {
 
   const createCheckoutSession = async (priceId) => { /* ... (unchanged) ... */ }
   const handleSpotifyConnect = async () => { /* ... (unchanged) ... */ }
-  const handleSpotifyDisconnect = async () => { /* ... (unchanged) ... */ }
+  const handleSpotifyDisconnect = async () => { // <-- Add async
+    if (window.confirm('Are you sure you want to disconnect your Spotify account?')) {
+      try {
+        // --- THIS IS THE FIX ---
+        // Add await to ensure the database call completes
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            spotify_access_token: null,
+            spotify_refresh_token: null,
+          })
+          .eq('id', session.user.id)
+        if (error) throw error
+        
+        // This part is now safe to run
+        setProfile({ ...profile, spotify_access_token: null })
+        alert('Successfully disconnected from Spotify.')
+      } catch (error) {
+        alert('Error disconnecting from Spotify: ' + error.message)
+      }
+    }
+  }
 
    return (
     <div className="page-content">

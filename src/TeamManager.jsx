@@ -151,9 +151,8 @@ export default function TeamManager({ session, profile }) {
               {loadingPlaylists ? (
                 <p>Loading playlists...</p>
               ) : (
-                <select id={`playlist-select-${team.id}`} value={team.warmup_playlist_id || ''} onChange={(e) => handlePlaylistChange(team.id, e.target.value)} style={{marginTop: '5px'}}>
-                  <option value="">-- Select a Playlist --</option>
-                  {playlists.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
+                <select id={`playlist-select-${team.id}`} value={team.warmup_playlist_id || ''} onChange={(e) => handlePlaylistChange(team.id, e.target.value)} style={{marginTop: '5px', maxWidth: '100%'}}>
+                  {/* ... options ... */}
                 </select>
               )}
             </div>
@@ -192,8 +191,9 @@ export default function TeamManager({ session, profile }) {
       {canCreateTeam && (
         <div className="card">
           <h3>Create New Team</h3>
-          <form onSubmit={handleCreateTeam} style={{display: 'flex', gap: '10px'}}>
-            <input type="text" placeholder="Enter new team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required style={{marginBottom: 0}} />
+          {/* --- THIS IS THE FIX for the form layout --- */}
+          <form onSubmit={handleCreateTeam} className="responsive-form">
+            <input type="text" placeholder="Enter new team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required style={{marginBottom: 0, flexGrow: 1}} />
             <button type="submit" className="btn-primary" style={{width: 'auto', flexShrink: 0}}>Create Team</button>
           </form>
         </div>

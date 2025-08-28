@@ -14,7 +14,7 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: var(--mlb-blue);
   color: var(--text-color);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 /* --- Main Layout & Header --- */
@@ -140,4 +140,16 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
 .chart-container {
   margin-top: 30px;
   height: 400px; /* Give the chart a fixed height */
+}
+
+/* --- Form Styles --- */
+.responsive-form {
+  display: flex;
+  flex-direction: column; /* Stacked on mobile */
+  gap: 10px;
+}
+@media (min-width: 500px) {
+  .responsive-form {
+    flex-direction: row; /* Side-by-side on larger screens */
+  }
 }
