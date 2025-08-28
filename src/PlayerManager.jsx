@@ -1,10 +1,9 @@
 // src/PlayerManager.jsx
 
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import SongSearch from './SongSearch'
-import PlayButton from './PlayButton'
 
 const formatTime = (ms) => {
   if (ms === null || isNaN(ms) || ms === 0) return '00:00';
@@ -23,10 +22,13 @@ const parseTime = (timeStr) => {
 };
 
 export default function PlayerManager() {
-  const { teamId } = useParams()
-  const [loading, setLoading] = useState(true)
-  const [players, setPlayers] = useState([])
-  const [teamName, setTeamName] = useState('')
+  const { teamId } = useParams();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [team, setTeam] = useState(null);
+  const [teamName, setTeamName] = useState('');
+  const [editingTeamName, setEditingTeamName] = useState(false);
+  const [players, setPlayers] = useState([]);
   
   const [newPlayer, setNewPlayer] = useState({
     player_number: '',
@@ -38,39 +40,40 @@ export default function PlayerManager() {
     song_thumbnail_url: '',
     song_start_time: 0,
     song_search_text: '',
-  })
+  });
 
-  const [editingPlayerId, setEditingPlayerId] = useState(null) 
-  const [editFormData, setEditFormData] = useState({})
+  const [editingPlayerId, setEditingPlayerId] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
 
   useEffect(() => {
     const fetchTeamAndPlayers = async () => {
       try {
-        setLoading(true)
-        const { data: teamData } = await supabase.from('teams').select('team_name').eq('id', teamId).single()
-        setTeamName(teamData.team_name)
+        setLoading(true);
+        const { data: teamData, error: teamError } = await supabase.from('teams').select('*').eq('id', teamId).single();
+        if (teamError) throw teamError;
+        setTeam(teamData);
+        setTeamName(teamData.team_name);
         
         const { data: playersData, error: playersError } = await supabase
           .from('players')
-          .select('id, player_number, first_name, last_name, song_uri, song_title, song_artist, song_thumbnail_url, song_start_time')
+          .select('*')
           .eq('team_id', teamId)
-          .order('batting_order', { ascending: true })
-
-        if (playersError) throw playersError
-        setPlayers(playersData)
+          .order('batting_order', { ascending: true });
+        if (playersError) throw playersError;
+        setPlayers(playersData);
       } catch (error) {
-        alert(error.message)
+        alert(error.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchTeamAndPlayers()
-  }, [teamId])
+    };
+    fetchTeamAndPlayers();
+  }, [teamId]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setNewPlayer({ ...newPlayer, [name]: value })
-  }
+    const { name, value } = e.target;
+    setNewPlayer({ ...newPlayer, [name]: value });
+  };
 
   const handleSongSelection = (song) => {
     setNewPlayer({
@@ -80,51 +83,51 @@ export default function PlayerManager() {
       song_artist: song.artist,
       song_thumbnail_url: song.thumbnail,
       song_search_text: `${song.title} - ${song.artist}`,
-    })
-  }
+    });
+  };
 
   const handleAddPlayer = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      const { song_search_text, ...playerToInsert } = { ...newPlayer, team_id: teamId }
-      const { data, error } = await supabase.from('players').insert(playerToInsert).select('*').single()
-      if (error) throw error
-      setPlayers([...players, data])
+      const { song_search_text, ...playerToInsert } = { ...newPlayer, team_id: teamId };
+      const { data, error } = await supabase.from('players').insert(playerToInsert).select('*').single();
+      if (error) throw error;
+      setPlayers([...players, data]);
       setNewPlayer({
         player_number: '', first_name: '', last_name: '', song_uri: '',
         song_title: '', song_artist: '', song_thumbnail_url: '',
         song_start_time: 0, song_search_text: '',
-      })
+      });
     } catch (error) {
-      alert('Error adding player: ' + error.message)
+      alert('Error adding player: ' + error.message);
     }
-  }
+  };
   
   const handleDeletePlayer = async (playerId) => {
     if (window.confirm('Are you sure you want to delete this player?')) {
       try {
-        const { error } = await supabase.from('players').delete().eq('id', playerId)
-        if (error) throw error
-        setPlayers(players.filter(p => p.id !== playerId))
+        const { error } = await supabase.from('players').delete().eq('id', playerId);
+        if (error) throw error;
+        setPlayers(players.filter(p => p.id !== playerId));
       } catch (error) {
-        alert('Error deleting player: ' + error.message)
+        alert('Error deleting player: ' + error.message);
       }
     }
-  }
+  };
 
   const handleEditClick = (player) => {
-    setEditingPlayerId(player.id)
-    setEditFormData({ ...player }) 
-  }
+    setEditingPlayerId(player.id);
+    setEditFormData({ ...player });
+  };
 
   const handleCancelClick = () => {
-    setEditingPlayerId(null)
-  }
+    setEditingPlayerId(null);
+  };
 
   const handleEditFormChange = (e) => {
-    const { name, value } = e.target
-    setEditFormData({ ...editFormData, [name]: value })
-  }
+    const { name, value } = e.target;
+    setEditFormData({ ...editFormData, [name]: value });
+  };
 
   const handleEditSongSelection = (song) => {
     setEditFormData({
@@ -133,108 +136,130 @@ export default function PlayerManager() {
       song_title: song.title,
       song_artist: song.artist,
       song_thumbnail_url: song.thumbnail,
-    })
-  }
+    });
+  };
 
   const handleUpdatePlayer = async () => {
     try {
-      const { id, ...updatedPlayerData } = editFormData
-      const { error } = await supabase.from('players').update(updatedPlayerData).eq('id', id)
-      if (error) throw error
-      const updatedPlayers = players.map(p => p.id === id ? editFormData : p)
-      setPlayers(updatedPlayers)
-      setEditingPlayerId(null)
+      const { id, ...updatedPlayerData } = editFormData;
+      const { error } = await supabase.from('players').update(updatedPlayerData).eq('id', id);
+      if (error) throw error;
+      const updatedPlayers = players.map(p => p.id === id ? editFormData : p);
+      setPlayers(updatedPlayers);
+      setEditingPlayerId(null);
     } catch (error) {
-      alert('Error updating player: ' + error.message)
+      alert('Error updating player: ' + error.message);
     }
-  }
+  };
 
-  if (loading) return <div>Loading team details...</div>
+  const handleTeamNameSave = async () => {
+    try {
+      const { error } = await supabase.from('teams').update({ team_name: teamName }).eq('id', teamId);
+      if (error) throw error;
+      setEditingTeamName(false);
+    } catch (error) {
+      alert('Error updating team name: ' + error.message);
+    }
+  };
+
+  if (loading) return <div className="page-content"><p>Loading team details...</p></div>;
 
   return (
-    <div>
-      <Link to="/dashboard">{'<'} Back to Dashboard</Link>
-      <h1>{teamName}</h1>
-      <h2>Roster</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Song</th>
-            <th>Start Time</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {players.map(player => (
-            <tr key={player.id}>
-              {editingPlayerId === player.id ? (
-                <>
-                  <td><input type="number" name="player_number" value={editFormData.player_number} onChange={handleEditFormChange} /></td>
-                  <td><input type="text" name="first_name" value={editFormData.first_name} onChange={handleEditFormChange} /></td>
-                  <td><input type="text" name="last_name" value={editFormData.last_name} onChange={handleEditFormChange} /></td>
-                  <td><SongSearch onSongSelect={handleEditSongSelection} initialValue={`${editFormData.song_title || ''} - ${editFormData.song_artist || ''}`} /></td>
-                  <td>
-                    <input 
-                      type="text" 
-                      name="song_start_time" 
-                      defaultValue={formatTime(editFormData.song_start_time)}
-                      onBlur={(e) => handleEditFormChange({ target: { name: 'song_start_time', value: parseTime(e.target.value) }})}
-                      placeholder="MM:SS"
-                    />
-                  </td>
-                  <td>
-                    <button onClick={handleUpdatePlayer}>Save</button>
-                    <button onClick={handleCancelClick}>Cancel</button>
-                  </td>                  
-                </>
-              ) : (
-                <>
-                  <td>{player.player_number}</td>
-                  <td>{player.first_name}</td>
-                  <td>{player.last_name}</td>
-                  <td>
-                    {player.song_title ? (
-                      <div>
-                        <strong>{player.song_title}</strong>
-                        <br />
-                        <span style={{fontSize: '0.9em', color: '#555'}}>{player.song_artist}</span>
-                      </div>
-                    ) : (
-                      'No song selected'
-                    )}
-                  </td>
-                  <td>{formatTime(player.song_start_time)}</td>
-                  <td>
-                    <button onClick={() => handleEditClick(player)}>Edit</button>
-                    <button onClick={() => handleDeletePlayer(player.id)}>Delete</button>
-                  </td>               
-                </>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <hr />
-      <h3>Add New Player</h3>
-      <form onSubmit={handleAddPlayer}>
-        <input type="number" name="player_number" placeholder="Number" value={newPlayer.player_number} onChange={handleInputChange} />
-        <input type="text" name="first_name" placeholder="First Name" value={newPlayer.first_name} onChange={handleInputChange} required />
-        <input type="text" name="last_name" placeholder="Last Name" value={newPlayer.last_name} onChange={handleInputChange} />
-        <SongSearch 
-          onSongSelect={handleSongSelection} 
-          initialValue={newPlayer.song_search_text} 
-        />
-        <input 
-          type="text" 
-          placeholder="Start Time (MM:SS)" 
-          defaultValue="00:00"
-          onBlur={(e) => handleInputChange({ target: { name: 'song_start_time', value: parseTime(e.target.value) }})}
-        />
-        <button type="submit">Add Player</button>
-      </form>
+    <div className="page-content">
+      <div style={{marginBottom: '20px'}}>
+        <button onClick={() => navigate('/dashboard')} className="btn-secondary" style={{width: 'auto', borderColor: 'var(--mlb-red)', color: 'var(--mlb-red)'}}>
+          {'<'} Back to Dashboard
+        </button>
+      </div>
+      
+      <div className="card-header">
+        {editingTeamName ? (
+          <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)} style={{fontSize: '1.4em', fontWeight: 'bold', color: 'var(--mlb-blue)'}} />
+        ) : (
+          <h1 className="card-title" style={{margin: 0}}>{teamName}</h1>
+        )}
+        <div className="card-actions">
+          {editingTeamName ? (
+            <button onClick={handleTeamNameSave} className="btn-primary btn-icon">
+              <i className="fa-solid fa-save"></i><span className="btn-text">Save</span>
+            </button>
+          ) : (
+            <button onClick={() => setEditingTeamName(true)} className="btn-secondary btn-icon">
+              <i className="fa-solid fa-pencil"></i><span className="btn-text">Edit Name</span>
+            </button>
+          )}
+          <Link to={`/public/${team?.public_share_id}`} className="btn-primary btn-icon">
+            <i className="fa-solid fa-play"></i><span className="btn-text">Play</span>
+          </Link>
+        </div>
+      </div>
+      
+      <div className="player-card">
+        <h2>Roster</h2>
+        <div style={{overflowX: 'auto'}}>
+          <table style={{width: '100%'}}>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th className="hide-mobile">Last Name</th>
+                <th>Song</th>
+                <th>Start Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {players.map(player => (
+                <tr key={player.id}>
+                  {editingPlayerId === player.id ? (
+                    <>
+                      <td><input type="number" name="player_number" value={editFormData.player_number} onChange={handleEditFormChange} /></td>
+                      <td colSpan="2">
+                        <input type="text" name="first_name" value={editFormData.first_name} onChange={handleEditFormChange} placeholder="First Name" />
+                        <input type="text" name="last_name" value={editFormData.last_name} onChange={handleEditFormChange} placeholder="Last Name" />
+                      </td>
+                      <td><SongSearch onSongSelect={handleEditSongSelection} initialValue={`${editFormData.song_title || ''} - ${editFormData.song_artist || ''}`} /></td>
+                      <td>
+                        <input type="text" name="song_start_time" defaultValue={formatTime(editFormData.song_start_time)} onBlur={(e) => handleEditFormChange({ target: { name: 'song_start_time', value: parseTime(e.target.value) }})} placeholder="MM:SS" />
+                      </td>
+                      <td>
+                        <button onClick={handleUpdatePlayer} className="btn-primary btn-icon"><i className="fa-solid fa-save"></i></button>
+                        <button onClick={handleCancelClick} className="btn-secondary btn-icon"><i className="fa-solid fa-times"></i></button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{player.player_number}</td>
+                      <td>{player.first_name} <span className="hide-mobile">{player.last_name?.charAt(0)}.</span></td>
+                      <td className="hide-mobile">{player.last_name}</td>
+                      <td>{player.song_title || 'No song selected'}</td>
+                      <td>{formatTime(player.song_start_time)}</td>
+                      <td>
+                        <div className="card-actions">
+                          <button onClick={() => handleEditClick(player)} className="btn-secondary btn-icon"><i className="fa-solid fa-pencil"></i></button>
+                          <button onClick={() => handleDeletePlayer(player.id)} className="btn-icon-red btn-icon"><i className="fa-solid fa-trash"></i></button>
+                        </div>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div className="player-card">
+        <h3>Add New Player</h3>
+        <form onSubmit={handleAddPlayer} className="input-group">
+          <input type="number" name="player_number" placeholder="Number" value={newPlayer.player_number} onChange={handleInputChange} />
+          <input type="text" name="first_name" placeholder="First Name" value={newPlayer.first_name} onChange={handleInputChange} required />
+          <input type="text" name="last_name" placeholder="Last Name" value={newPlayer.last_name} onChange={handleInputChange} />
+          <SongSearch onSongSelect={handleSongSelection} initialValue={newPlayer.song_search_text} />
+          <input type="text" placeholder="Start Time (MM:SS)" defaultValue="00:00" onBlur={(e) => handleInputChange({ target: { name: 'song_start_time', value: parseTime(e.target.value) }})} />
+          <button type="submit" className="btn-primary">Add Player</button>
+        </form>
+      </div>
     </div>
   )
 }
