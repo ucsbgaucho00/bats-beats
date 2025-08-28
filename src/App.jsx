@@ -3,21 +3,23 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { initGA, trackPageView } from './analytics';
+
+// Import all your components
+import Layout from './Layout'
 import LandingPage from './LandingPage'
 import Dashboard from './Dashboard'
 import PlayerManager from './PlayerManager'
 import WarmupPlayer from './WarmupPlayer'
 import PublicPlayer from './PublicPlayer'
 import PublicWarmupPlayer from './PublicWarmupPlayer'
+import ForgotPasswordPage from './ForgotPasswordPage'
+import SetPasswordPage from './SetPasswordPage'
 import AdminRoutes from './AdminRoutes'
-import AdminDashboard from './AdminDashboard'
 import AdminLayout from './AdminLayout'
+import AdminDashboard from './AdminDashboard'
 import CouponManager from './CouponManager'
 import UserManager from './UserManager'
-import SetPasswordPage from './SetPasswordPage'
-import ForgotPasswordPage from './ForgotPasswordPage'
-import Layout from './Layout'
-
 
 const ProtectedRoutes = () => {
   const [session, setSession] = useState(null)
@@ -46,7 +48,6 @@ const ProtectedRoutes = () => {
     return () => subscription.unsubscribe()
   }, [])
 
-  // --- NEW: Redirect from root to dashboard if logged in and licensed ---
   if (session && profile?.license && location.pathname === '/') {
     return <Navigate to="/dashboard" replace />;
   }
@@ -58,11 +59,19 @@ const ProtectedRoutes = () => {
   return <Outlet context={{ session }} />;
 };
 
-// --- THIS IS THE CORRECTED APP COMPONENT ---
 function App() {
+  const location = useLocation();
+
+  useEffect(() => {
+    initGA();
+  }, []);
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
+
   return (
     <Routes>
-      {/* Wrap all pages in the main layout */}
       <Route element={<Layout />}>
         {/* --- Public Routes --- */}
         <Route path="/" element={<LandingPage />} />
@@ -82,7 +91,6 @@ function App() {
         <Route path="/admin" element={<AdminRoutes />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="coupons" element={<CouponManager />} />
             <Route path="users" element={<UserManager />} />
           </Route>
         </Route>
@@ -90,4 +98,5 @@ function App() {
     </Routes>
   )
 }
+
 export default App
