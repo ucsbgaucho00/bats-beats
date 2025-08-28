@@ -6,57 +6,56 @@ import { supabase } from './supabaseClient'
 let spotifyPlayer = null;
 let device_id = null;
 
-const initializePlayer = (accessToken) => {
+const initializePlayer = (accessToken, onSdkStatusChange) => {
   if (spotifyPlayer) {
     spotifyPlayer.disconnect();
   }
   if (window.Spotify && accessToken) {
     spotifyPlayer = new window.Spotify.Player({
-      name: 'Bats & Beats Web Player',
+      name: 'Bats & Beats Player',
       getOAuthToken: cb => { cb(accessToken); }
     });
-    // ... (error listeners)
-    spotifyPlayer.addListener('initialization_error', ({ message }) => { console.error('Init Error:', message); });
-    spotifyPlayer.addListener('authentication_error', ({ message }) => { console.error('Auth Error:', message); });
-    spotifyPlayer.addListener('account_error', ({ message }) => { console.error('Account Error:', message); });
-    spotifyPlayer.addListener('playback_error', ({ message }) => { console.error('Playback Error:', message); });
-    
+
+    // --- NEW: Report status changes ---
+    spotifyPlayer.addListener('initialization_error', ({ message }) => { onSdkStatusChange(`ERROR: ${message}`); });
+    spotifyPlayer.addListener('authentication_error', ({ message }) => { onSdkStatusChange(`AUTH ERROR: ${message}`); });
+    spotifyPlayer.addListener('account_error', ({ message }) => { onSdkStatusChange(`ACCOUNT ERROR: ${message}`); });
     spotifyPlayer.addListener('ready', ({ device_id: ready_device_id }) => {
-      console.log('Ready with Device ID', ready_device_id);
       device_id = ready_device_id;
+      onSdkStatusChange('READY');
     });
-    // ... (other listeners)
-    spotifyPlayer.addListener('not_ready', ({ device_id }) => { console.log('Device ID has gone offline', device_id); });
-    spotifyPlayer.connect();
+    spotifyPlayer.addListener('not_ready', () => {
+      device_id = null;
+      onSdkStatusChange('OFFLINE');
+    });
+
+    spotifyPlayer.connect().then(success => {
+      if (success) {
+        onSdkStatusChange('Connecting...');
+      }
+    });
   }
 };
 
-// --- THIS IS THE CORRECTED COMPONENT ---
-export default function PlayButton({ songUri, startTimeMs, accessTokenOverride = null }) {
+export default function PlayButton({ songUri, startTimeMs, accessTokenOverride = null, onPlayStateChange = () => {}, onSdkStatusChange = () => {} }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [accessToken, setAccessToken] = useState(accessTokenOverride);
-
   const timeoutRef = useRef(null);
   const fadeIntervalRef = useRef(null);
 
   useEffect(() => {
-    // This effect now ONLY handles initializing the player when the token is ready.
     if (accessToken) {
-      initializePlayer(accessToken);
+      initializePlayer(accessToken, onSdkStatusChange);
     }
-  }, [accessToken]);
+  }, [accessToken, onSdkStatusChange]);
 
   useEffect(() => {
-    // This effect handles fetching the token IF no override is provided.
     const fetchTokenForLoggedInUser = async () => {
       if (!accessTokenOverride) {
+        // This is for the logged-in user view, we should add refresh logic here too eventually
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('spotify_access_token')
-            .eq('id', session.user.id)
-            .single();
+          const { data: profile } = await supabase.from('profiles').select('spotify_access_token').eq('id', session.user.id).single();
           if (profile?.spotify_access_token) {
             setAccessToken(profile.spotify_access_token);
           }
@@ -114,6 +113,8 @@ export default function PlayButton({ songUri, startTimeMs, accessTokenOverride =
   };
 
   return (
-    <button onClick={handlePlay} disabled={!songUri} className="play-pause-btn">{isPlaying ? '❚❚' : '▶'}</button>
+    <button onClick={handlePlay} disabled={!songUri} className="play-pause-btn">
+      {isPlaying ? <i className="fa-solid fa-pause"></i> : <i className="fa-solid fa-play"></i>}
+    </button>
   );
 }

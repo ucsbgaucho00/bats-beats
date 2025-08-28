@@ -22,6 +22,7 @@ export default function PublicPlayer() {
   const [activePlayers, setActivePlayers] = useState([])
   const [inactivePlayers, setInactivePlayers] = useState([])
   const [currentlyPlayingUri, setCurrentlyPlayingUri] = useState(null);
+const [sdkStatus, setSdkStatus] = useState('Initializing...'); // --- NEW: SDK Status state ---
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -106,32 +107,13 @@ export default function PublicPlayer() {
   if (loading) return <div className="page-content"><p>Loading player...</p></div>;
   if (error || !teamData) return <div className="page-content"><p>Error: {error || 'Could not load team data.'}</p></div>;
 
-  const showInactiveSection = isReordering || inactivePlayers.length > 0;
-
   return (
     <div className="page-content">
       <div className="card-header">
         <h1 className="card-title">{teamData.teamName}</h1>
-        <div className="card-actions">
-          {teamData.showWarmupButton && (
-            <Link to={`/public/${shareId}/warmup`}>
-              <button className="btn-primary">▶ Play Warmup</button>
-            </Link>
-          )}
-          <button onClick={() => {
-            if (isReordering) {
-              handleSaveOrder();
-            } else {
-              setIsReordering(true);
-            }
-          }} className={isReordering ? 'btn-primary' : 'btn-secondary'} style={isReordering ? {backgroundColor: 'var(--mlb-red)', borderColor: 'var(--mlb-red)'} : {}}>
-            {isReordering ? 'Save Changes' : 'Edit Lineup'}
-          </button>
-          {isReordering && (
-            <button onClick={() => setIsReordering(false)} className="btn-secondary">
-              Cancel
-            </button>
-          )}
+        {/* --- NEW: SDK Status Display --- */}
+        <div style={{ fontSize: '10px', textAlign: 'right', textTransform: 'uppercase' }}>
+          Spotify Status: <strong>{sdkStatus}</strong>
         </div>
       </div>
 
@@ -154,11 +136,7 @@ export default function PublicPlayer() {
                   {activePlayers.map((player, index) => (
                     <Draggable key={player.id} draggableId={String(player.id)} index={index} isDragDisabled={!isReordering}>
                       {(provided) => (
-                        <tr 
-                          ref={provided.innerRef} 
-                          {...provided.draggableProps} 
-                          className={currentlyPlayingUri === player.song_uri ? 'player-row playing' : 'player-row'}
-                        >
+                        <tr ref={provided.innerRef} {...provided.draggableProps} className={currentlyPlayingUri === player.song_uri ? 'player-row playing' : 'player-row'}>
                           {isReordering && <td {...provided.dragHandleProps} className="draggable-handle">☰</td>}
                           <td>{player.player_number}</td>
                           <td>{`${player.first_name} ${player.last_name ? player.last_name.charAt(0) + '.' : ''}`}</td>
@@ -169,6 +147,7 @@ export default function PublicPlayer() {
                               startTimeMs={player.song_start_time}
                               accessTokenOverride={freshToken}
                               onPlayStateChange={(isPlaying) => setCurrentlyPlayingUri(isPlaying ? player.song_uri : null)}
+                              onSdkStatusChange={setSdkStatus} // <-- Pass the callback
                             />
                           </td>
                         </tr>
