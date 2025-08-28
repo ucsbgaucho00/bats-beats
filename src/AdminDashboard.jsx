@@ -38,7 +38,10 @@ export default function AdminDashboard() {
   if (!analytics) return <p>No analytics data found.</p>;
 
   // Format the revenue number for display
-  const formatCurrency = (num) => `$${num.toFixed(2)}`;
+  const formatCurrency = (num) => {
+    if (typeof num !== 'number') return '$0.00';
+    return `$${num.toFixed(2)}`;
+  }
 
   return (
     <div>
@@ -61,7 +64,7 @@ export default function AdminDashboard() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis />
-            <Tooltip />
+            <Tooltip formatter={(value) => formatCurrency(value)} />
             <Legend />
             <Line type="monotone" dataKey="revenue" stroke="var(--mlb-blue)" activeDot={{ r: 8 }} />
           </LineChart>
