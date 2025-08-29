@@ -154,6 +154,14 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
   }
 }
 
+* --- NEW: Universal Box Sizing & Root Setup --- */
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
 /* --- Global Form Element Styling --- */
 /* This ensures ALL inputs and selects look the same */
 input[type="text"],

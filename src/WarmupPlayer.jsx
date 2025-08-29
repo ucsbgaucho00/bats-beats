@@ -1,8 +1,9 @@
-// src/WarmupPlayer.jsx
+// src/PublicWarmupPlayer.jsx
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
+import AudioUnlocker from './AudioUnlocker'
 
 let spotifyPlayer = null;
 let device_id = null;
@@ -17,69 +18,57 @@ const initializePlayer = (accessToken) => {
       getOAuthToken: cb => { cb(accessToken); }
     });
     spotifyPlayer.addListener('ready', ({ device_id: ready_device_id }) => {
-      console.log('Warmup Player Ready with Device ID', ready_device_id);
+      console.log('Public Warmup Player Ready with Device ID', ready_device_id);
       device_id = ready_device_id;
     });
-    // Add other listeners as needed
+    spotifyPlayer.addListener('not_ready', () => { device_id = null; });
     spotifyPlayer.connect();
   }
 };
 
-export default function WarmupPlayer() {
-  const { teamId } = useParams()
+export default function PublicWarmupPlayer() {
+  const { shareId } = useParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [team, setTeam] = useState(null)
-  const [playlistName, setPlaylistName] = useState('');
+  const [teamData, setTeamData] = useState(null)
   const [accessToken, setAccessToken] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isShuffle, setIsShuffle] = useState(true)
   const fadeIntervalRef = useRef(null);
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
 
   useEffect(() => {
-    const getTeamDataAndToken = async () => {
+    const getPublicDataAndToken = async () => {
+      if (!isAudioUnlocked || !shareId) return;
+      
       try {
         setLoading(true);
-        const { data: teamData, error: teamError } = await supabase
-          .from('teams')
-          .select('team_name, warmup_playlist_id, user_id')
-          .eq('id', teamId)
-          .single()
-        if (teamError) throw teamError
-        if (!teamData.warmup_playlist_id) throw new Error("No warmup playlist selected for this team.")
-        setTeam(teamData)
+        const { data: team, error: teamError } = await supabase
+          .rpc('get_public_team_details', { share_id_in: shareId })
+          .single();
+        if (teamError) throw teamError;
+        if (!team.warmup_playlist_id) throw new Error("No warmup playlist is set for this team.");
 
-        const { data, error } = await supabase.functions.invoke('spotify-refresh', {
-          body: { owner_user_id: teamData.user_id }
-        })
-        if (error) throw error
-        const token = data.new_access_token;
-        setAccessToken(token)
-        initializePlayer(token)
+        const initialData = {
+            teamName: team.team_name,
+            teamId: team.team_id,
+            ownerUserId: team.owner_user_id,
+            warmup_playlist_id: team.warmup_playlist_id,
+        }
+        setTeamData(initialData);
 
-        const playlistResponse = await fetch(`https://api.spotify.com/v1/playlists/${teamData.warmup_playlist_id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!playlistResponse.ok) throw new Error("Could not fetch playlist details.");
-        const playlistData = await playlistResponse.json();
-        setPlaylistName(playlistData.name);
-
+        const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } });
+        if (refreshError) throw refreshError;
+        setAccessToken(tokenData.new_access_token);
+        initializePlayer(tokenData.new_access_token);
       } catch (err) {
-        setError(err.message)
+        setError(err.message);
       } finally {
-        setLoading(false)
-      }
-    }
-    getTeamDataAndToken()
-  }, [teamId])
-
-  useEffect(() => {
-    return () => {
-      if (isPlaying && spotifyPlayer) {
-        startFadeOut();
+        setLoading(false);
       }
     };
-  }, [isPlaying]);
+    getPublicDataAndToken();
+  }, [shareId, isAudioUnlocked]);
 
   const startFadeOut = (andThen) => {
     clearInterval(fadeIntervalRef.current);
@@ -110,7 +99,7 @@ export default function WarmupPlayer() {
     } else {
       await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
         method: 'PUT',
-        body: JSON.stringify({ context_uri: `spotify:playlist:${team.warmup_playlist_id}` }),
+        body: JSON.stringify({ context_uri: `spotify:playlist:${teamData.warmup_playlist_id}` }),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
@@ -139,14 +128,17 @@ export default function WarmupPlayer() {
     setIsPlaying(true);
   };
 
+  if (!isAudioUnlocked) {
+    return <AudioUnlocker onUnlock={() => setIsAudioUnlocked(true)} />;
+  }
   if (loading) return <div className="page-content"><p>Loading Warmup Player...</p></div>
-  if (error) return <div className="page-content"><p>Error: {error} <Link to="/dashboard">Go Back</Link></p></div>
+  if (error) return <div className="page-content"><p>Error: {error} <Link to={`/public/${shareId}`}>Go Back</Link></p></div>
 
   return (
     <div className="page-content">
       <div style={{marginBottom: '20px'}}>
-        <Link to="/dashboard">
-          <button className="btn-secondary" style={{width: 'auto'}}>{'<'} Back to Dashboard</button>
+        <Link to={`/public/${shareId}`}>
+          <button className="btn-secondary" style={{width: 'auto'}}>{'<'} Back to Walk-up Player</button>
         </Link>
       </div>
       
@@ -161,7 +153,7 @@ export default function WarmupPlayer() {
           <i className="fa-solid fa-forward-step"></i>
         </button>
       </div>
-      {playlistName && <p className="playlist-name">{playlistName}</p>}
+      {teamData?.teamName && <p className="playlist-name">{teamData.teamName} Warmup Mix</p>}
     </div>
   )
 }

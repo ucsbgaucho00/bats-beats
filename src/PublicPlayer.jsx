@@ -5,6 +5,7 @@ import { useParams, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import PlayButton from './PlayButton'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import AudioUnlocker from './AudioUnlocker'
 
 const truncate = (text, length) => {
   if (!text) return '';
@@ -22,25 +23,24 @@ export default function PublicPlayer() {
   const [activePlayers, setActivePlayers] = useState([])
   const [inactivePlayers, setInactivePlayers] = useState([])
   const [currentlyPlayingUri, setCurrentlyPlayingUri] = useState(null);
-const [sdkStatus, setSdkStatus] = useState('Initializing...'); // --- NEW: SDK Status state ---
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
 
   useEffect(() => {
     const fetchAllData = async () => {
-      if (!shareId) return;
+      if (!isAudioUnlocked || !shareId) return;
+
       try {
         setLoading(true);
         const { data: team, error: teamError } = await supabase
-          .from('teams')
-          .select('id, team_name, user_id, warmup_playlist_id, profiles(license)')
-          .eq('public_share_id', shareId)
+          .rpc('get_public_team_details', { share_id_in: shareId })
           .single();
         if (teamError) throw teamError;
         
         const initialData = {
             teamName: team.team_name,
-            teamId: team.id,
-            ownerUserId: team.user_id,
-            showWarmupButton: team.profiles?.license === 'Home Run' && !!team.warmup_playlist_id,
+            teamId: team.team_id,
+            ownerUserId: team.owner_user_id,
+            showWarmupButton: team.owner_license === 'Home Run' && !!team.warmup_playlist_id,
         }
         setTeamData(initialData);
 
@@ -64,7 +64,7 @@ const [sdkStatus, setSdkStatus] = useState('Initializing...'); // --- NEW: SDK S
       }
     };
     fetchAllData();
-  }, [shareId]);
+  }, [shareId, isAudioUnlocked]);
 
   const handleOnDragEnd = (result) => {
     const { source, destination } = result;
@@ -104,16 +104,46 @@ const [sdkStatus, setSdkStatus] = useState('Initializing...'); // --- NEW: SDK S
     }
   }
 
+  if (!isAudioUnlocked) {
+    return <AudioUnlocker onUnlock={() => setIsAudioUnlocked(true)} />;
+  }
   if (loading) return <div className="page-content"><p>Loading player...</p></div>;
   if (error || !teamData) return <div className="page-content"><p>Error: {error || 'Could not load team data.'}</p></div>;
 
+  const droppableStyle = (isDraggingOver) => ({
+    border: isReordering ? (isDraggingOver ? '2px dashed lightblue' : '2px dashed #ccc') : 'none',
+    borderRadius: '8px',
+    padding: isReordering ? '10px' : '0',
+    margin: '20px 0',
+    transition: 'all 0.2s ease-in-out',
+  });
+
+  const showInactiveSection = isReordering || inactivePlayers.length > 0;
+
   return (
     <div className="page-content">
-      <div className="card-header">
-        <h1 className="card-title">{teamData.teamName}</h1>
-        {/* --- NEW: SDK Status Display --- */}
-        <div style={{ fontSize: '10px', textAlign: 'right', textTransform: 'uppercase' }}>
-          Spotify Status: <strong>{sdkStatus}</strong>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <h1 style={{margin: 0}}>{teamData.teamName}</h1>
+        <div style={{display: 'flex', gap: '10px'}}>
+          {teamData.showWarmupButton && (
+            <Link to={`/public/${shareId}/warmup`}>
+              <button className="btn-primary">▶ Play Warmup</button>
+            </Link>
+          )}
+          <button onClick={() => {
+            if (isReordering) {
+              handleSaveOrder();
+            } else {
+              setIsReordering(true);
+            }
+          }} className={isReordering ? 'btn-primary' : 'btn-secondary'} style={isReordering ? {backgroundColor: 'var(--mlb-red)', borderColor: 'var(--mlb-red)'} : {}}>
+            {isReordering ? 'Save Changes' : 'Edit Lineup'}
+          </button>
+          {isReordering && (
+            <button onClick={() => setIsReordering(false)} className="btn-secondary">
+              Cancel
+            </button>
+          )}
         </div>
       </div>
 
@@ -136,7 +166,11 @@ const [sdkStatus, setSdkStatus] = useState('Initializing...'); // --- NEW: SDK S
                   {activePlayers.map((player, index) => (
                     <Draggable key={player.id} draggableId={String(player.id)} index={index} isDragDisabled={!isReordering}>
                       {(provided) => (
-                        <tr ref={provided.innerRef} {...provided.draggableProps} className={currentlyPlayingUri === player.song_uri ? 'player-row playing' : 'player-row'}>
+                        <tr 
+                          ref={provided.innerRef} 
+                          {...provided.draggableProps} 
+                          className={currentlyPlayingUri === player.song_uri ? 'player-row playing' : 'player-row'}
+                        >
                           {isReordering && <td {...provided.dragHandleProps} className="draggable-handle">☰</td>}
                           <td>{player.player_number}</td>
                           <td>{`${player.first_name} ${player.last_name ? player.last_name.charAt(0) + '.' : ''}`}</td>
@@ -147,7 +181,6 @@ const [sdkStatus, setSdkStatus] = useState('Initializing...'); // --- NEW: SDK S
                               startTimeMs={player.song_start_time}
                               accessTokenOverride={freshToken}
                               onPlayStateChange={(isPlaying) => setCurrentlyPlayingUri(isPlaying ? player.song_uri : null)}
-                              onSdkStatusChange={setSdkStatus} // <-- Pass the callback
                             />
                           </td>
                         </tr>
