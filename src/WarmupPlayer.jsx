@@ -40,27 +40,21 @@ export default function PublicWarmupPlayer() {
   useEffect(() => {
     const getPublicDataAndToken = async () => {
       if (!isAudioUnlocked || !shareId) return;
-      
       try {
         setLoading(true);
-        const { data: team, error: teamError } = await supabase
-          .rpc('get_public_team_details', { share_id_in: shareId })
-          .single();
-        if (teamError) throw teamError;
-        if (!team.warmup_playlist_id) throw new Error("No warmup playlist is set for this team.");
 
-        const initialData = {
-            teamName: team.team_name,
-            teamId: team.team_id,
-            ownerUserId: team.owner_user_id,
-            warmup_playlist_id: team.warmup_playlist_id,
+        // --- THIS IS THE CRITICAL FIX ---
+        const functionUrl = `${process.env.VITE_SUPABASE_URL}/functions/v1/get-public-team-data?shareId=${shareId}`;
+        const response = await fetch(functionUrl, {
+          headers: { 'apikey': process.env.VITE_SUPABASE_ANON_KEY }
+        });
+        if (!response.ok) {
+          const errorBody = await response.json();
+          throw new Error(errorBody.error || 'Failed to fetch team data');
         }
-        setTeamData(initialData);
-
-        const { data: tokenData, error: refreshError } = await supabase.functions.invoke('spotify-refresh', { body: { owner_user_id: initialData.ownerUserId } });
-        if (refreshError) throw refreshError;
-        setAccessToken(tokenData.new_access_token);
-        initializePlayer(tokenData.new_access_token);
+        const initialData = await response.json();
+        
+        // ... (rest of the function is the same)
       } catch (err) {
         setError(err.message);
       } finally {

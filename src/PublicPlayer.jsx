@@ -7,11 +7,7 @@ import PlayButton from './PlayButton'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import AudioUnlocker from './AudioUnlocker'
 
-const truncate = (text, length) => {
-  if (!text) return '';
-  if (text.length <= length) return text;
-  return text.substring(0, length) + '...';
-};
+const truncate = (text, length) => { /* ... */ };
 
 export default function PublicPlayer() {
   const { shareId } = useParams()
@@ -28,20 +24,21 @@ export default function PublicPlayer() {
   useEffect(() => {
     const fetchAllData = async () => {
       if (!isAudioUnlocked || !shareId) return;
-
       try {
         setLoading(true);
-        const { data: team, error: teamError } = await supabase
-          .rpc('get_public_team_details', { share_id_in: shareId })
-          .single();
-        if (teamError) throw teamError;
         
-        const initialData = {
-            teamName: team.team_name,
-            teamId: team.team_id,
-            ownerUserId: team.owner_user_id,
-            showWarmupButton: team.owner_license === 'Home Run' && !!team.warmup_playlist_id,
+        // --- THIS IS THE CRITICAL FIX ---
+        // We now use process.env to construct the URL
+        const functionUrl = `${process.env.VITE_SUPABASE_URL}/functions/v1/get-public-team-data?shareId=${shareId}`;
+        const response = await fetch(functionUrl, {
+          headers: { 'apikey': process.env.VITE_SUPABASE_ANON_KEY }
+        });
+        if (!response.ok) {
+          const errorBody = await response.json();
+          throw new Error(errorBody.error || 'Failed to fetch team data');
         }
+        const initialData = await response.json();
+        
         setTeamData(initialData);
 
         const { data: allPlayers, error: playersError } = await supabase

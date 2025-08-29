@@ -1,18 +1,20 @@
-import { defineConfig } from 'vite'
+// vite.config.js
+
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    // This is the new configuration block
-    hmr: {
-      host: 'localhost',
-      protocol: 'ws',
-    },
-    host: 'localhost',
-    port: 5173,
-    // Add your ngrok hostname here
-    allowedHosts: ['f5e75fa35edb.ngrok-free.app'], 
-  },
+export default defineConfig(({ mode }) => {
+  // Load env file based on the mode (development, production)
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
+    plugins: [react()],
+    // --- THIS IS THE CRITICAL FIX ---
+    // This 'define' block makes the environment variables available
+    // to your application code under `process.env`
+    define: {
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
+      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
+    }
+  }
 })

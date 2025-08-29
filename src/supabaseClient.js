@@ -2,8 +2,9 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// --- THIS IS THE CRITICAL FIX ---
+// Read the variables from process.env, which are now guaranteed to exist by vite.config.js
+const supabaseUrl = process.env.VITE_SUPABASE_URL
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY
 
-// Create and export the Supabase client (no custom schema needed)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
